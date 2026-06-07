@@ -1,0 +1,33 @@
+name: Deploy solution to Copilot Studio
+
+# Unattended deploy via a service principal. Set repo secrets:
+#   PP_CLIENT_ID, PP_CLIENT_SECRET, PP_TENANT_ID
+# The SPN must be added as an Application User in the target environment.
+on:
+  workflow_dispatch:
+    inputs:
+      environment_url:
+        description: "Target environment URL (https://org.crm.dynamics.com)"
+        required: true
+      solution:
+        description: "Path or URL to the solution .zip"
+        required: false
+        default: "solution/dealprogression_solution.zip"
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+      - name: Import solution
+        env:
+          RAPP_CLIENT_ID: ${{ secrets.PP_CLIENT_ID }}
+          RAPP_CLIENT_SECRET: ${{ secrets.PP_CLIENT_SECRET }}
+          RAPP_TENANT: ${{ secrets.PP_TENANT_ID }}
+        run: |
+          python3 agent.py --service-principal \
+            --environment "${{ inputs.environment_url }}" \
+            --solution "${{ inputs.solution }}"

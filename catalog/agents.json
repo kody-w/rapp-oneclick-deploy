@@ -1,0 +1,46 @@
+{
+  "$schema": "./agents.schema.json",
+  "source": {
+    "templatesRepo": "kody-w/AI-Agent-Templates",
+    "templatesSite": "https://kody-w.github.io/AI-Agent-Templates/",
+    "pipeline": "merger.py -> wrapper_generator -> solution_packager (RAPP)"
+  },
+  "agents": [
+    {
+      "id": "deal-progression",
+      "name": "Deal Progression Agent",
+      "category": "B2B Sales",
+      "description": "Tracks opportunities and recommends the next best action to move deals forward.",
+      "sourceStack": "agent_stacks/b2b_sales_stacks/deal_progression_stack",
+      "status": "ready",
+      "solution": "solution/dealprogression_solution.zip"
+    },
+    {
+      "id": "account-intelligence",
+      "name": "Account Intelligence Agent",
+      "category": "B2B Sales",
+      "description": "Multi-agent stack: stakeholder, competitive, risk and meeting-prep intelligence for an account.",
+      "sourceStack": "agent_stacks/b2b_sales_stacks/account_intelligence_stack",
+      "status": "convert",
+      "solution": null
+    },
+    {
+      "id": "proposal-generation",
+      "name": "Proposal Generation Agent",
+      "category": "B2B Sales",
+      "description": "Drafts tailored proposals from CRM context and prior wins.",
+      "sourceStack": "agent_stacks/b2b_sales_stacks/proposal_generation_stack",
+      "status": "convert",
+      "solution": null
+    },
+    {
+      "id": "sales-qualification",
+      "name": "Sales Qualification Agent",
+      "category": "B2B Sales",
+      "description": "Qualifies inbound leads against BANT/MEDDIC and routes them.",
+      "sourceStack": "agent_stacks/b2b_sales_stacks/sales_qualification_stack",
+      "status": "convert",
+      "solution": null
+    }
+  ]
+}
