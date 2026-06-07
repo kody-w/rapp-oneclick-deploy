@@ -25,22 +25,24 @@ Sign in once and the agent imports itself — no downloads, no manual solution i
 ## How it works
 
 ```
- agent.py (catalog pick OR raw GitHub URL)
-        │
-        ▼   RAPP brainstem + pipeline (same as the OG build)
-   merger.py  ──►  wrapper_generator  ──►  solution_packager  ──►  solution.zip
-        │            (LLM steps powered by the RAPP brainstem's Copilot-model
-        │             access — biased to the latest Opus models)
-        ▼
-   agent.py (this repo)  ──►  Dataverse ImportSolution  ──►  your Copilot Studio env
+ Path A — prebuilt:   ready solution.zip ─────────────────────────────┐
+                                                                       ▼
+ Path B — convert:    agent.py (raw URL) ─► convert.py ─► solution.zip ─► agent.py
+                                              │                            (ImportSolution)
+                                              ▼                            ─► your env
+                                     RAPP brainstem /chat  (REQUIRED LLM;
+                                     the brainstem's model flipper / Copilot
+                                     account picks the model)
 ```
 
 - **Deploy engine** — [`agent.py`](agent.py): stdlib-only, device-code sign-in (no secrets), discovers
   your environment via the Global Discovery Service, imports + publishes the solution.
 - **In-browser one-click** — [`docs/index.html`](docs/index.html): MSAL.js sign-in → environment pick →
   `ImportSolution` directly from the browser.
-- **Conversion** — `merger.py → wrapper_generator → solution_packager` (RAPP). LLM-assisted steps route
-  through the RAPP brainstem's Copilot-model access; deterministic fallback when no model is available.
+- **Conversion** — [`convert.py`](convert.py): fetches the `agent.py`, calls the **RAPP brainstem**
+  ([`brainstem_llm.py`](brainstem_llm.py)) to author the Copilot Studio agent definition, and packages a
+  valid solution by rebranding the system skeleton + injecting the generated GPT instructions. The LLM
+  step is **required** — if the brainstem is unreachable, conversion fails (it is not optional).
 
 ## Deploy modes
 
@@ -69,5 +71,12 @@ docs/                    GitHub Pages one-click UI (index.html + config.js)
 Nothing leaves Microsoft: the browser/CLI talks straight to `login.microsoftonline.com` and your
 Dataverse Web API. This repo never sees your tokens. The default sign-in uses the Power Platform CLI's
 public client; override with `--client-id` / your own registered app for production.
+
+## Develop & test
+```bash
+pip install pytest && python -m pytest -q      # 13 tests: brainstem client, convert, deploy, catalog
+python convert.py --source <raw agent.py URL>  # real conversion via the running brainstem
+```
+CI runs the suite on every push ([`.github/workflows/test.yml`](.github/workflows/test.yml)).
 
 _MIT licensed. A RAPP project._

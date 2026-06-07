@@ -152,26 +152,21 @@ def load_solution(src):
         return f.read()
 
 
-def convert_via_brainstem(source, brainstem):
-    """Ask the RAPP brainstem to look up `source` (a raw agent.py URL or an
-    AI-Agent-Templates stack path) from the public repo and run it through the
-    RAPP conversion pipeline (merger -> wrapper_generator -> solution_packager).
-    LLM-assisted steps use the brainstem's GitHub/Copilot-model access, biased to
-    the latest Opus models. Expected reply: JSON with `solution_b64` or `solution_url`.
-    """
-    say(f"  🧠 Asking the RAPP brainstem to convert: {C['c']}{source}{C['x']}")
-    payload = {"message": f"Convert and package this agent for Copilot Studio: {source}",
-               "intent": "convert_agent", "source": source,
-               "model_preference": "opus-latest", "return": "solution_zip"}
-    code, r = _req(brainstem.rstrip("/") + "/chat", data=payload,
-                   headers={"Content-Type": "application/json"}, timeout=600)
-    if code != 200 or not isinstance(r, dict):
-        die(f"Brainstem conversion failed ({code}). Is the brainstem running at {brainstem}?  {r}")
-    if r.get("solution_b64"):
-        say("  ✓ Brainstem returned a packaged solution", "g"); return base64.b64decode(r["solution_b64"])
-    if r.get("solution_url"):
-        return load_solution(r["solution_url"])
-    die(f"Brainstem returned no solution payload: {r}")
+def convert_source(source, brainstem):
+    """Convert a RAPP agent.py (raw URL or path) into a Copilot Studio solution by
+    running convert.py, whose required LLM steps route through the RAPP brainstem
+    (the brainstem's model flipper picks the model). Returns solution zip bytes."""
+    try:
+        import convert
+    except ImportError:
+        die("convert.py / brainstem_llm.py not found next to agent.py — needed for --source.")
+    say(f"  🧠 Converting via the RAPP brainstem: {C['c']}{source}{C['x']}")
+    try:
+        zip_bytes = convert.convert(source, brainstem_url=brainstem)
+    except Exception as e:
+        die(f"Conversion failed: {e}")
+    say("  ✓ Brainstem authored the agent and packaged the solution", "g")
+    return zip_bytes
 
 
 def api(env, token, action, body=None, method="POST", timeout=600):
@@ -221,7 +216,7 @@ def main():
     args = ap.parse_args()
 
     say(f"\n{C['b']}🚀 RAPP → Copilot Studio one-click deploy{C['x']}")
-    zip_bytes = convert_via_brainstem(args.source, args.brainstem) if args.source else load_solution(args.solution)
+    zip_bytes = convert_source(args.source, args.brainstem) if args.source else load_solution(args.solution)
     say(f"  Solution ready ({len(zip_bytes):,} bytes)\n")
 
     if args.service_principal:

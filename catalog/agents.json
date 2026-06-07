@@ -1,45 +1,97 @@
 {
-  "$schema": "./agents.schema.json",
   "source": {
     "templatesRepo": "kody-w/AI-Agent-Templates",
     "templatesSite": "https://kody-w.github.io/AI-Agent-Templates/",
-    "pipeline": "merger.py -> wrapper_generator -> solution_packager (RAPP)"
+    "pipeline": "agent.py --source -> RAPP brainstem (Copilot models) -> solution.zip -> ImportSolution"
   },
   "agents": [
     {
-      "id": "deal-progression",
-      "name": "Deal Progression Agent",
-      "category": "B2B Sales",
-      "description": "Tracks opportunities and recommends the next best action to move deals forward.",
-      "sourceStack": "agent_stacks/b2b_sales_stacks/deal_progression_stack",
+      "id": "personalized-shopping-assistant",
+      "name": "Personalized Shopping Assistant",
+      "category": "Retail / CPG",
+      "description": "Pre-converted Copilot Studio agent (Retail / CPG).",
       "status": "ready",
-      "solution": "solution/dealprogression_solution.zip"
+      "solution": "solutions/personalized_shopping_assistant_solution.zip"
+    },
+    {
+      "id": "cart-abandonment-recovery",
+      "name": "Cart Abandonment Recovery",
+      "category": "Retail / CPG",
+      "description": "Pre-converted Copilot Studio agent (Retail / CPG).",
+      "status": "ready",
+      "solution": "solutions/cart_abandonment_recovery_solution.zip"
+    },
+    {
+      "id": "proposal-copilot",
+      "name": "Proposal Copilot",
+      "category": "Professional Services",
+      "description": "Pre-converted Copilot Studio agent (Professional Services).",
+      "status": "ready",
+      "solution": "solutions/proposal_copilot_solution.zip"
+    },
+    {
+      "id": "contract-risk-review",
+      "name": "Contract Risk Review",
+      "category": "Professional Services",
+      "description": "Pre-converted Copilot Studio agent (Professional Services).",
+      "status": "ready",
+      "solution": "solutions/contract_risk_review_solution.zip"
+    },
+    {
+      "id": "it-helpdesk",
+      "name": "It Helpdesk",
+      "category": "IT Management",
+      "description": "Pre-converted Copilot Studio agent (IT Management).",
+      "status": "ready",
+      "solution": "solutions/it_helpdesk_solution.zip"
+    },
+    {
+      "id": "care-gap-closure",
+      "name": "Care Gap Closure",
+      "category": "Healthcare",
+      "description": "Pre-converted Copilot Studio agent (Healthcare).",
+      "status": "ready",
+      "solution": "solutions/care_gap_closure_solution.zip"
+    },
+    {
+      "id": "loan-origination-assistant",
+      "name": "Loan Origination Assistant",
+      "category": "Financial Services",
+      "description": "Pre-converted Copilot Studio agent (Financial Services).",
+      "status": "ready",
+      "solution": "solutions/loan_origination_assistant_solution.zip"
+    },
+    {
+      "id": "federal-grants-oversight",
+      "name": "Federal Grants Oversight",
+      "category": "Government",
+      "description": "Pre-converted Copilot Studio agent (Government).",
+      "status": "ready",
+      "solution": "solutions/federal_grants_oversight_solution.zip"
+    },
+    {
+      "id": "asset-maintenance-forecast",
+      "name": "Asset Maintenance Forecast",
+      "category": "Energy & Utilities",
+      "description": "Pre-converted Copilot Studio agent (Energy & Utilities).",
+      "status": "ready",
+      "solution": "solutions/asset_maintenance_forecast_solution.zip"
+    },
+    {
+      "id": "ask-hr",
+      "name": "Ask Hr",
+      "category": "Human Resources",
+      "description": "Pre-converted Copilot Studio agent (Human Resources).",
+      "status": "ready",
+      "solution": "solutions/ask_hr_solution.zip"
     },
     {
       "id": "account-intelligence",
       "name": "Account Intelligence Agent",
       "category": "B2B Sales",
-      "description": "Multi-agent stack: stakeholder, competitive, risk and meeting-prep intelligence for an account.",
-      "sourceStack": "agent_stacks/b2b_sales_stacks/account_intelligence_stack",
+      "description": "Multi-agent account intelligence stack \u2014 converted on demand via the RAPP brainstem.",
       "status": "convert",
-      "solution": null
-    },
-    {
-      "id": "proposal-generation",
-      "name": "Proposal Generation Agent",
-      "category": "B2B Sales",
-      "description": "Drafts tailored proposals from CRM context and prior wins.",
-      "sourceStack": "agent_stacks/b2b_sales_stacks/proposal_generation_stack",
-      "status": "convert",
-      "solution": null
-    },
-    {
-      "id": "sales-qualification",
-      "name": "Sales Qualification Agent",
-      "category": "B2B Sales",
-      "description": "Qualifies inbound leads against BANT/MEDDIC and routes them.",
-      "sourceStack": "agent_stacks/b2b_sales_stacks/sales_qualification_stack",
-      "status": "convert",
+      "source": "https://raw.githubusercontent.com/kody-w/AI-Agent-Templates/main/agent_stacks/b2b_sales_stacks/account_intelligence_stack/agents/account_intelligence_agent.py",
       "solution": null
     }
   ]
