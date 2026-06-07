@@ -91,6 +91,11 @@ def test_search_templates_default_repo(monkeypatch):
     r = json.loads(agent().perform(action="search_templates", query="proposal"))
     assert r["status"] == "success" and r["repo"] == "kody-w/AI-Agent-Templates"
     assert r["count"] == 1
+    # multi-word query matches the underscore path (the bug that caused count:0 loops)
+    fake = {"tree": [{"type": "blob", "path": "agent_stacks/energy_stacks/emission_tracking_stack/agents/emission_tracking_agent.py"}]}
+    monkeypatch.setattr(cda, "_req", lambda url, **k: (200, fake))
+    r2 = json.loads(agent().perform(action="search_templates", query="emission tracking"))
+    assert r2["count"] == 1, "multi-word query must match underscore paths"
     t = r["templates"][0]
     assert t["name"] == "Proposal Generation" and t["stack"] == "proposal_generation_stack"
     assert t["raw_url"].startswith("https://raw.githubusercontent.com/kody-w/AI-Agent-Templates/main/")

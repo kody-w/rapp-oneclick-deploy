@@ -15,8 +15,12 @@ HUMAN — two steps
      local.settings.json credentials, and click Deploy.
 
 LLM — procedure (the agent IS the API; drive it via these actions)
-  search_templates    -> {query?} search kody-w/AI-Agent-Templates (the DEFAULT source)
-                         for deployable agent.py files; returns raw_urls to pick from
+  deploy_template     -> {query_or_url} FASTEST PATH. One call: search (default repo
+                         AI-Agent-Templates) OR a raw URL OR a local path -> fetch ->
+                         derive instructions -> package -> start deploy. Returns a
+                         device-login code to relay (or deploys via saved credentials).
+                         Then complete_deploy with the device_code. Don't re-search.
+  search_templates    -> {query?} (advanced) browse kody-w/AI-Agent-Templates raw_urls
   list_catalog        -> pre-converted ready-to-deploy solutions
   fetch_source        -> {source_url} a template raw_url, ANY public GitHub raw agent.py
                          URL, OR a LOCAL file path; returns the text; YOU then author a
@@ -98,8 +102,10 @@ def _search_templates(query="", repo=TEMPLATES_REPO, limit=60):
             continue
         if any(x in p.lower() for x in ("copy", "experimental", "__pycache__", "disabled", "/tests/")):
             continue
-        if q and q not in p.lower():
-            continue
+        if q:
+            norm = p.lower().replace("_", " ")               # "emission tracking" matches emission_tracking_agent.py
+            if not all(w in norm for w in q.split()):
+                continue
         m = re.search(r"/([^/]+_stack)/", p)
         out.append({"name": p.rsplit("/", 1)[-1].replace("_agent.py", "").replace("_", " ").title(),
                     "path": p, "stack": m.group(1) if m else None,
@@ -119,6 +125,39 @@ def _read_source(src):
         with open(local, "r", encoding="utf-8", errors="replace") as f:
             return f.read()
     raise FileNotFoundError("provide a raw GitHub URL or an existing local file path")
+
+
+def _derive_spec(source_code):
+    """Deterministically derive a Copilot Studio agent spec from agent.py source —
+    no LLM hop. Parses the class docstring + public methods into instructions."""
+    import ast as _ast
+    name, doc, methods = "RAPP Agent", "", []
+    try:
+        tree = _ast.parse(source_code)
+        cls = next((n for n in tree.body if isinstance(n, _ast.ClassDef) and n.name.endswith("Agent")), None) \
+            or next((n for n in tree.body if isinstance(n, _ast.ClassDef)), None)
+        if cls:
+            name = cls.name
+            doc = _ast.get_docstring(cls) or ""
+            for m in cls.body:
+                if isinstance(m, (_ast.FunctionDef, _ast.AsyncFunctionDef)) and not m.name.startswith("_") \
+                        and m.name not in ("perform", "system_context", "to_tool"):
+                    first = (_ast.get_docstring(m) or "").strip().split("\n")[0]
+                    methods.append((m.name, first))
+    except Exception:
+        g = re.search(r"class\s+(\w+)", source_code)
+        name = g.group(1) if g else name
+        doc = (re.search(r'"""(.*?)"""', source_code, re.S) or ["", ""])[1].strip() if '"""' in source_code else ""
+    display = (re.sub(r"(?<!^)(?=[A-Z])", " ", name).replace("Agent", "").strip()) or "RAPP Agent"
+    caps = "\n".join(f"- {re.sub(r'(?<!^)(?=[A-Z])', ' ', n).replace('_', ' ').strip().title()}"
+                     + (f": {d}" if d else "") for n, d in methods[:14]) \
+        or "- Assist the user within this agent's domain."
+    instructions = (f"# Purpose\n{doc.strip() or ('You are the ' + display + ' agent.')}\n\n"
+                    f"# Capabilities\n{caps}\n\n"
+                    f"# Guidelines\n- Confirm the user's request and collect any required inputs.\n"
+                    f"- Be concise, accurate, and helpful; stay within scope.")
+    return {"display_name": display[:60], "unique_name": _sanitize(display),
+            "description": ((doc.strip().split('\n')[0]) or display)[:200], "instructions": instructions}
 
 
 def _get_bytes(url, timeout=120):
@@ -241,22 +280,21 @@ class CopilotStudioDeployAgent(BasicAgent):
             "name": self.name,
             "description": (
                 "Convert and deploy a RAPP agent into the user's own Microsoft Copilot Studio "
-                "environment. To find agents, DEFAULT to action=search_templates (searches the "
-                "kody-w/AI-Agent-Templates repo) — pass an optional query to filter. The source for a "
-                "deploy can be (a) a template raw_url from search_templates, (b) ANY public GitHub raw "
-                "agent.py URL, or (c) a LOCAL file path. Workflow: (1) action=fetch_source with that "
-                "source (URL or local path) to read it, then YOU author a short display name + a detailed "
-                "Copilot Studio instructions prompt; (2) action=package with agent_name + instructions; "
-                "(3) action=deploy with the returned package_id (or a solution_url for a prebuilt agent) "
-                "to start sign-in and relay the code; (4) action=complete_deploy with the device_code once "
-                "signed in. action=list_catalog shows pre-converted ready-to-deploy solutions. "
-                "If credentials_status shows found=true (saved service-principal local.settings.json via "
-                "set_credentials), prefer action=deploy_with_credentials — deploys autonomously, NO login."),
+                "environment. **FASTEST PATH — use this first: action=deploy_template** with "
+                "`query_or_url` = an agent name to search for (default source: kody-w/AI-Agent-Templates), "
+                "OR any public raw agent.py URL, OR a local file path. It searches, fetches, converts, "
+                "packages and STARTS the deploy in ONE call — returns a device-login user_code+URL to relay "
+                "(or deploys autonomously if a service principal is saved). Then call action=complete_deploy "
+                "with the device_code once the user signs in. Do NOT re-search; deploy_template handles it. "
+                "Advanced/granular actions (rarely needed): search_templates, fetch_source, package, deploy, "
+                "deploy_with_credentials, list_catalog (pre-converted solutions), set_credentials, "
+                "credentials_status."),
             "parameters": {"type": "object", "properties": {
-                "action": {"type": "string", "enum": ["search_templates", "list_catalog", "fetch_source",
-                                                       "package", "deploy", "complete_deploy",
+                "action": {"type": "string", "enum": ["deploy_template", "complete_deploy", "search_templates",
+                                                       "list_catalog", "fetch_source", "package", "deploy",
                                                        "set_credentials", "credentials_status",
                                                        "deploy_with_credentials"]},
+                "query_or_url": {"type": "string", "description": "deploy_template: agent name to search, OR a raw agent.py URL, OR a local path"},
                 "query": {"type": "string", "description": "optional filter for search_templates"},
                 "repo": {"type": "string", "description": "optional public repo for search_templates (default kody-w/AI-Agent-Templates)"},
                 "source_url": {"type": "string", "description": "raw agent.py URL OR a local file path (fetch_source)"},
@@ -277,6 +315,39 @@ class CopilotStudioDeployAgent(BasicAgent):
     def perform(self, **kwargs):
         action = (kwargs.get("action") or "").strip()
         try:
+            if action == "deploy_template":
+                # ONE-SHOT: resolve source -> fetch -> derive instructions -> package -> start deploy.
+                q = (kwargs.get("query_or_url") or kwargs.get("source_url") or kwargs.get("query") or "").strip()
+                if not q:
+                    return json.dumps({"status": "error", "message": "query_or_url required (agent name, raw URL, or local path)"})
+                chosen = None
+                if q.startswith(("http://", "https://")) or os.path.isfile(os.path.expanduser(q)):
+                    source_ref = q
+                else:
+                    tpls = _search_templates(q)
+                    if not tpls:
+                        return json.dumps({"status": "error", "message": f"no agent matched '{q}' — try a different name, a raw URL, or a local path"})
+                    source_ref, chosen = tpls[0]["raw_url"], tpls[0]["name"]
+                spec = _derive_spec(_read_source(source_ref))
+                zip_bytes = build_solution(_get_bytes(f"{REPO_RAW}/pipeline/skeleton.zip"),
+                                           spec["display_name"], spec["unique_name"], spec["instructions"])
+                creds = _extract_dyn(kwargs["credentials"]) if kwargs.get("credentials") else _load_local_settings()
+                if creds:  # autonomous service-principal deploy, no login
+                    token = _sp_token(creds["client_id"], creds["client_secret"], creds["tenant_id"], creds["resource"])
+                    _import(creds["resource"], token, zip_bytes)
+                    return json.dumps({"status": "success", "agent": spec["display_name"], "source": source_ref,
+                                       "environment_url": creds["resource"],
+                                       "message": f"Deployed '{spec['display_name']}' to {creds['resource']}. Open https://copilotstudio.microsoft.com/."})
+                dc = _device_start(f"{DISCO}/user_impersonation offline_access")
+                _CACHE[dc["device_code"]] = {"zip": zip_bytes, "env": kwargs.get("environment_url")}
+                return json.dumps({"status": "auth_required", "agent": spec["display_name"], "source": source_ref,
+                                   "device_code": dc["device_code"], "user_code": dc["user_code"],
+                                   "verification_uri": dc["verification_uri"],
+                                   "message": (f"Converted '{spec['display_name']}'. Tell the user: open "
+                                               f"{dc['verification_uri']} and enter code {dc['user_code']}, sign into "
+                                               "the target Copilot Studio environment, then call action=complete_deploy "
+                                               "with this device_code. Do NOT search again.")})
+
             if action == "search_templates":
                 tpls = _search_templates(kwargs.get("query", ""), kwargs.get("repo") or TEMPLATES_REPO)
                 return json.dumps({"status": "success", "repo": kwargs.get("repo") or TEMPLATES_REPO,
