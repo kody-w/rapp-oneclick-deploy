@@ -214,7 +214,7 @@ class CopilotStudioDeployAgent(BasicAgent):
                 if not tok:
                     return json.dumps({"status": "pending", "message": "Still waiting on sign-in — retry complete_deploy."})
                 envs = _discover(tok["access_token"])
-                want = pending.get("env")
+                want = kwargs.get("environment_url") or pending.get("env")
                 env = next((e for e in envs if e["ApiUrl"].rstrip("/").lower() == (want or "").rstrip("/").lower()),
                            envs[0] if envs else None)
                 if env is None:

@@ -5,44 +5,51 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Deploy to Copilot Studio — one click</title>
 <style>
-  :root{--purple:#742774;--blue:#0f6cbd;--ink:#1b1b1b;--muted:#6b6b6b;--line:#e7e7e7;
+  :root{--purple:#742774;--blue:#0f6cbd;--ink:#1b1b1b;--muted:#6b6b6b;--line:#e7e7e7;--green:#107c41;
     --font:'Segoe UI Variable','Segoe UI',-apple-system,BlinkMacSystemFont,Helvetica,Arial,sans-serif;}
   *{box-sizing:border-box;margin:0;padding:0}
   body{font-family:var(--font);color:var(--ink);background:radial-gradient(120% 100% at 50% 0,#f4f0fb 0,#f6f9fd 45%,#fff 100%);
     min-height:100vh;display:flex;align-items:center;justify-content:center;padding:32px}
   .card{width:100%;max-width:700px;background:#fff;border:1px solid var(--line);border-radius:20px;
-    box-shadow:0 24px 70px rgba(40,20,80,.14);padding:38px 44px}
+    box-shadow:0 24px 70px rgba(40,20,80,.14);padding:36px 44px}
   .msq{display:grid;grid-template-columns:11px 11px;grid-template-rows:11px 11px;gap:2px;margin-bottom:16px}
   .msq i{width:11px;height:11px;display:block}.r{background:#f25022}.g{background:#7fba00}.b{background:#00a4ef}.y{background:#ffb900}
   .eyebrow{color:var(--blue);font-size:12px;font-weight:700;letter-spacing:.16em;text-transform:uppercase}
   h1{font-size:28px;font-weight:800;letter-spacing:-.01em;margin:8px 0 6px;line-height:1.08}
   h1 .accent{color:var(--purple)}
-  p.lead{color:var(--muted);font-size:14.5px;line-height:1.5;margin-bottom:20px}
-  .lbl{display:block;font-size:11.5px;font-weight:700;color:var(--ink);margin:0 0 7px;letter-spacing:.02em}
-  .agents{display:flex;flex-direction:column;gap:8px;margin-bottom:14px}
-  .agent{display:flex;align-items:center;gap:12px;border:1.5px solid var(--line);border-radius:12px;padding:11px 13px;cursor:pointer;transition:border-color .12s,background .12s}
-  .agent:hover{border-color:#cdbce6}
-  .agent.sel{border-color:var(--purple);background:#faf8fe}
+  p.lead{color:var(--muted);font-size:14.5px;line-height:1.5;margin-bottom:18px}
+  .lbl{display:block;font-size:11.5px;font-weight:700;margin:0 0 7px;letter-spacing:.02em}
+  .agents{display:flex;flex-direction:column;gap:8px;margin-bottom:12px}
+  .agent{display:flex;align-items:center;gap:12px;border:1.5px solid var(--line);border-radius:12px;padding:11px 13px;cursor:pointer;transition:.12s}
+  .agent:hover{border-color:#cdbce6}.agent.sel{border-color:var(--purple);background:#faf8fe}
   .agent .dot{width:32px;height:32px;border-radius:9px;background:linear-gradient(135deg,#0a5bd6,#16b6a6);flex:none;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:13px}
   .agent b{font-size:13.5px}.agent small{display:block;color:var(--muted);font-size:11.5px;margin-top:1px}
   .agent .pill{margin-left:auto;font-size:9px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;border-radius:6px;padding:3px 7px}
-  .pill.ready{color:#107c41;background:#e7f5ec}.pill.conv{color:var(--purple);background:#f3ecfa}
-  .orline{text-align:center;color:#9aa3ab;font-size:11px;margin:12px 0;position:relative}
+  .pill.ready{color:var(--green);background:#e7f5ec}.pill.conv{color:var(--purple);background:#f3ecfa}
+  .orline{text-align:center;color:#9aa3ab;font-size:11px;margin:12px 0}
   .urlin{width:100%;padding:11px 12px;border:1.5px solid var(--line);border-radius:11px;font-family:inherit;font-size:13px}
   .urlin:focus{outline:none;border-color:var(--blue)}
-  button.deploy{width:100%;border:0;border-radius:12px;padding:15px;font-size:15.5px;font-weight:700;color:#fff;cursor:pointer;margin-top:16px;
+  /* brainstem status */
+  .bs{margin:16px 0 6px;border:1.5px solid var(--line);border-radius:13px;padding:13px 15px;background:#fbfbfc}
+  .bs .row{display:flex;align-items:center;gap:9px;font-size:13.5px}
+  .bs .led{width:9px;height:9px;border-radius:50%;flex:none;background:#c9ccd1}
+  .bs.up .led{background:var(--green);box-shadow:0 0 0 3px #e7f5ec}
+  .bs.down .led{background:#d18b1f;box-shadow:0 0 0 3px #fbf0dd}
+  .bs b{font-weight:700}.bs .sub{color:var(--muted);font-size:12px;margin-top:6px}
+  .bs code{display:block;background:#1e1e23;color:#d6f5e3;padding:11px 13px;border-radius:9px;margin-top:9px;
+    font:12px/1.5 'SF Mono',ui-monospace,Menlo,Consolas,monospace;overflow-x:auto;white-space:pre}
+  .mini{border:1px solid var(--line);background:#fff;border-radius:7px;padding:4px 10px;font-size:11px;font-weight:600;cursor:pointer;margin-left:auto}
+  button.deploy{width:100%;border:0;border-radius:12px;padding:15px;font-size:15.5px;font-weight:700;color:#fff;cursor:pointer;margin-top:12px;
     background:linear-gradient(90deg,var(--purple),#9b3aa0);transition:filter .15s;font-family:inherit}
-  button.deploy:hover{filter:brightness(1.07)}button.deploy:disabled{opacity:.55;cursor:default}
-  .steps{display:flex;gap:8px;margin:14px 0 0;color:var(--muted);font-size:12px;justify-content:center}.steps b{color:var(--ink)}
-  select{width:100%;padding:11px;border:1.5px solid var(--line);border-radius:10px;font-family:inherit;font-size:14px;margin-top:10px;display:none}
-  select.show{display:block}
-  .term{margin-top:18px;border:1px solid var(--line);border-radius:12px;overflow:hidden;display:none}.term.show{display:block}
-  .term .hd{background:#f6f6f8;padding:8px 14px;font-size:12px;color:var(--muted);display:flex;justify-content:space-between;align-items:center}
-  .term code{display:block;background:#1e1e23;color:#d6f5e3;padding:13px 16px;font:12.5px/1.5 'SF Mono',ui-monospace,Menlo,Consolas,monospace;overflow-x:auto;white-space:pre}
-  .copy{border:1px solid var(--line);background:#fff;border-radius:7px;padding:4px 10px;font-size:11px;font-weight:600;cursor:pointer}
-  #log{margin-top:16px;font:12.5px/1.55 ui-monospace,Menlo,Consolas,monospace;color:#3b3b3b;display:none}#log.show{display:block}
-  #log .ok{color:#107c41}#log .err{color:#c62828}#log .step{color:var(--blue)}
-  .foot{margin-top:24px;padding-top:14px;border-top:1px solid var(--line);color:#9a9a9a;font-size:11.5px;display:flex;justify-content:space-between}
+  button.deploy:hover{filter:brightness(1.07)}button.deploy:disabled{opacity:.5;cursor:default}
+  #log{margin-top:16px;font:12.5px/1.6 ui-monospace,Menlo,Consolas,monospace;display:none}
+  #log.show{display:block}#log .ok{color:var(--green)}#log .err{color:#c62828}#log .step{color:var(--blue)}#log .muted{color:#9aa3ab}
+  .auth{display:none;margin-top:14px;border:1.5px solid #cfe3f7;background:#f3f8fe;border-radius:12px;padding:14px}
+  .auth.show{display:block}
+  .auth .code{font:800 22px/1 ui-monospace,Menlo,Consolas,monospace;letter-spacing:2px;color:#0a4f93;margin:8px 0}
+  .auth a{color:var(--blue);font-weight:700}
+  .auth button{margin-top:10px;border:0;border-radius:9px;background:var(--green);color:#fff;font-weight:700;padding:10px 16px;cursor:pointer;font-family:inherit}
+  .foot{margin-top:22px;padding-top:14px;border-top:1px solid var(--line);color:#9a9a9a;font-size:11.5px;display:flex;justify-content:space-between}
   a{color:var(--blue);text-decoration:none}
 </style>
 </head>
@@ -51,132 +58,177 @@
     <div class="msq"><i class="r"></i><i class="g"></i><i class="b"></i><i class="y"></i></div>
     <div class="eyebrow">RAPP · Microsoft Copilot Studio</div>
     <h1>Deploy an agent in <span class="accent">one click</span></h1>
-    <p class="lead">Pick an agent — or paste a raw <code>agent.py</code> URL. Sign in once and it imports
-       itself into <b>your</b> Copilot Studio environment.</p>
+    <p class="lead">Pick an agent — or paste a raw <code>agent.py</code> URL. Your local RAPP brainstem
+       converts &amp; deploys it into <b>your</b> Copilot Studio environment.</p>
 
     <label class="lbl">Choose an agent <span style="color:#9aa3ab;font-weight:500">· from AI-Agent-Templates</span></label>
     <div class="agents" id="agents"></div>
-
     <div class="orline">— or paste a raw agent.py URL —</div>
     <input class="urlin" id="urlIn" placeholder="https://raw.githubusercontent.com/&lt;user&gt;/&lt;repo&gt;/main/agents/my_agent.py">
 
-    <button class="deploy" id="go">Deploy to Copilot Studio</button>
-    <select id="envSel"></select>
-    <div class="steps"><span>1. <b>Sign in</b></span>·<span>2. <b>Pick environment</b></span>·<span>3. <b>Auto-import</b></span></div>
+    <!-- brainstem status -->
+    <div class="bs" id="bs">
+      <div class="row"><span class="led"></span><b id="bsTitle">Checking for your local brainstem…</b>
+        <button class="mini" id="bsRecheck" style="display:none">Recheck</button></div>
+      <div class="sub" id="bsSub"></div>
+      <code id="bsCmd" style="display:none">curl -fsSL https://kody-w.github.io/rapp-installer/install.sh | bash</code>
+    </div>
+
+    <button class="deploy" id="go" disabled>Deploy to Copilot Studio</button>
+
+    <div class="auth" id="auth">
+      <div>① Open <a id="authUrl" target="_blank" href="https://microsoft.com/devicelogin">microsoft.com/devicelogin</a>
+        and enter this code, then sign into the environment you want to deploy to:</div>
+      <div class="code" id="authCode">————</div>
+      <div style="color:#6b6b6b;font-size:12px">② Then click below — the agent finishes the import autonomously.</div>
+      <button id="authDone">I’ve signed in — finish deploy</button>
+    </div>
 
     <div id="log"></div>
-    <div class="term" id="term">
-      <div class="hd"><span>No setup? Run this in your terminal instead:</span><button class="copy" id="copyBtn">Copy</button></div>
-      <code id="cmd"></code>
-    </div>
+
     <div class="foot">
-      <span>Imports into your own tenant · nothing leaves Microsoft</span>
-      <a href="https://github.com/kody-w/rapp-oneclick-deploy" target="_blank">View on GitHub ↗</a>
+      <span>Runs through your local brainstem · nothing leaves your machine + Microsoft</span>
+      <a href="https://github.com/kody-w/rapp-oneclick-deploy" target="_blank">GitHub ↗</a>
     </div>
   </div>
 
 <script src="config.js"></script>
-<script src="https://alcdn.msauth.net/browser/3.10.0/js/msal-browser.min.js"></script>
 <script>
-const CFG = window.RAPP_CONFIG, DISCO = "https://globaldisco.crm.dynamics.com", $ = id => document.getElementById(id);
+const CFG = window.RAPP_CONFIG;
+const BS = "http://localhost:7071";
 const RAW_BASE = "https://raw.githubusercontent.com/kody-w/rapp-oneclick-deploy/main/";
-const browserReady = CFG.clientId && !CFG.clientId.startsWith("REPLACE_");
-const log = (m, cls="") => { const L=$("log"); L.classList.add("show"); L.innerHTML += `<div class="${cls}">${m}</div>`; };
-const uuid = () => ([1e7]+-1e3+-4e3+-8e3+-1e11).replace(/[018]/g,c=>(c^crypto.getRandomValues(new Uint8Array(1))[0]&15>>c/4).toString(16));
-const b64 = buf => { let s=""; const a=new Uint8Array(buf); for(let i=0;i<a.length;i++) s+=String.fromCharCode(a[i]); return btoa(s); };
+const $ = id => document.getElementById(id);
+let ACTIVE = null, SESSION = null, DEVICE = null, bsUp = false;
 
-let ACTIVE = null;  // { mode:'ready'|'convert', solutionUrl?, label, source? }
+const log = (m, c="") => { const L=$("log"); L.classList.add("show"); L.innerHTML += `<div class="${c}">${m}</div>`; L.scrollTop=L.scrollHeight; };
 
-function selectAgent(a, el) {
+// ---- pick what to deploy ----
+function selectAgent(a, el){
   document.querySelectorAll(".agent").forEach(x=>x.classList.remove("sel"));
   if (el) el.classList.add("sel");
   $("urlIn").value = "";
   ACTIVE = a.status === "ready"
-    ? { mode:"ready", solutionUrl: RAW_BASE + a.solution, label: a.name }
-    : { mode:"convert", source: a.sourceStack, label: a.name };
-  $("go").textContent = a.status === "ready" ? `Deploy ${a.name}` : `Convert & deploy ${a.name}`;
+    ? {mode:"ready", solutionUrl: RAW_BASE + a.solution, label:a.name}
+    : {mode:"convert", source:a.source, label:a.name};
+  setBtn();
 }
-
-async function loadCatalog() {
-  try {
-    const cat = await fetch(RAW_BASE + "catalog/agents.json").then(r=>r.json());
-    $("agents").innerHTML = "";
-    cat.agents.forEach((a,i) => {
-      const el = document.createElement("div");
-      el.className = "agent" + (i===0?" sel":"");
-      el.innerHTML = `<div class="dot">⚡</div><div><b>${a.name}</b><small>${a.description}</small></div>
-        <span class="pill ${a.status==='ready'?'ready':'conv'}">${a.status==='ready'?'Ready':'Convert'}</span>`;
-      el.onclick = () => selectAgent(a, el);
-      $("agents").appendChild(el);
-      if (i===0) selectAgent(a, el);
-    });
-  } catch(e){ $("agents").innerHTML = `<div class="agent"><div><b>Catalog unavailable</b><small>Paste a raw agent.py URL below.</small></div></div>`; }
-}
-
-$("urlIn").addEventListener("input", e => {
-  const u = e.target.value.trim();
-  if (u) { document.querySelectorAll(".agent").forEach(x=>x.classList.remove("sel"));
-    ACTIVE = { mode:"convert", source:u, label:"Custom agent.py" }; $("go").textContent = "Convert & deploy"; }
+$("urlIn").addEventListener("input", e=>{
+  const u=e.target.value.trim();
+  if(u){ document.querySelectorAll(".agent").forEach(x=>x.classList.remove("sel"));
+    ACTIVE={mode:"convert", source:u, label:"Custom agent.py"}; } else ACTIVE=null;
+  setBtn();
 });
-
-$("copyBtn").onclick = () => { navigator.clipboard.writeText($("cmd").textContent); $("copyBtn").textContent="Copied ✓"; };
-
-function setCmd() {
-  let c = CFG.installCommand;
-  if (ACTIVE && ACTIVE.mode === "convert") c = CFG.installCommand + ` --source "${ACTIVE.source}"`;
-  else if (ACTIVE && ACTIVE.solutionUrl) c = CFG.installCommand + ` --solution "${ACTIVE.solutionUrl}"`;
-  $("cmd").textContent = c;
+async function loadCatalog(){
+  try{
+    const cat = await fetch(RAW_BASE+"catalog/agents.json").then(r=>r.json());
+    $("agents").innerHTML="";
+    cat.agents.forEach((a,i)=>{
+      const el=document.createElement("div"); el.className="agent"+(i===0?" sel":"");
+      el.innerHTML=`<div class="dot">⚡</div><div><b>${a.name}</b><small>${a.description}</small></div>
+        <span class="pill ${a.status==='ready'?'ready':'conv'}">${a.status==='ready'?'Ready':'Convert'}</span>`;
+      el.onclick=()=>selectAgent(a,el); $("agents").appendChild(el);
+      if(i===0) selectAgent(a,el);
+    });
+  }catch(e){ $("agents").innerHTML=`<div class="agent"><div><b>Catalog offline</b><small>Paste a raw agent.py URL.</small></div></div>`; }
 }
-function terminalMode(reason){ setCmd(); $("term").classList.add("show"); if(reason) log(reason); }
 
-async function deploy() {
-  setCmd();
-  if (!ACTIVE) { log("✗ Pick an agent or paste a URL first.","err"); return; }
-  if (ACTIVE.mode === "convert") {
-    log(`→ "${ACTIVE.label}" needs conversion first.`,"step");
-    log("→ The RAPP brainstem looks it up from the public repo and runs it through the","step");
-    log("&nbsp;&nbsp; pipeline (merger → wrapper_generator → packager), then deploys.","step");
-    terminalMode("→ Run the command below — the brainstem converts, then this same deploy step imports it.");
-    return;
+// ---- brainstem detection (same pattern as the installer page) ----
+function setBtn(){ $("go").disabled = !(bsUp && ACTIVE); }
+async function pollBrainstem(){
+  try{
+    const h = await fetch(BS+"/health",{cache:"no-store"}).then(r=>r.json());
+    bsUp = true;
+    $("bs").className="bs up";
+    $("bsTitle").textContent = `Brainstem running · ${h.model||"?"} · ${(h.agents||[]).length} agents`;
+    const hasDeployer = (h.agents||[]).includes("CopilotStudioDeploy");
+    $("bsSub").innerHTML = hasDeployer
+      ? "Deploy runs through your local brainstem’s <b>CopilotStudioDeploy</b> agent."
+      : `Brainstem up, but the deploy agent isn’t installed. <a href="#" id="instAgent">Install it →</a>`;
+    $("bsCmd").style.display="none"; $("bsRecheck").style.display="none";
+    if(!hasDeployer){ const ia=$("instAgent"); if(ia) ia.onclick=(e)=>{e.preventDefault();
+      $("bsCmd").textContent="curl -fsSL https://raw.githubusercontent.com/kody-w/rapp-oneclick-deploy/main/copilot_deploy_agent.py -o ~/.brainstem/src/rapp_brainstem/agents/copilot_deploy_agent.py";
+      $("bsCmd").style.display="block"; }; bsUp=false; }
+  }catch(e){
+    bsUp=false; $("bs").className="bs down";
+    $("bsTitle").textContent="Brainstem not running on your machine";
+    $("bsSub").textContent="Start it (installs if missing), then click Recheck:";
+    $("bsCmd").style.display="block"; $("bsRecheck").style.display="inline-block";
   }
-  if (!browserReady) { terminalMode("In-browser deploy isn’t configured yet (no client ID set)."); return; }
-  $("go").disabled = true; $("log").classList.add("show"); $("log").innerHTML = "";
-  try {
-    const pca = new msal.PublicClientApplication({ auth:{ clientId:CFG.clientId,
-      authority:`https://login.microsoftonline.com/${CFG.tenant}`, redirectUri:location.href.split("#")[0].split("?")[0] }});
-    await pca.initialize();
-    log("→ Signing you in…","step");
-    const discoScope = `${DISCO}/user_impersonation`;
-    const login = await pca.loginPopup({ scopes:[discoScope] }); const account = login.account;
-    log(`✓ Signed in as ${account.username}`,"ok");
-    const disco = await pca.acquireTokenSilent({account,scopes:[discoScope]}).catch(()=>pca.acquireTokenPopup({scopes:[discoScope]}));
-    log("→ Discovering your environments…","step");
-    const inst = await fetch(`${DISCO}/api/discovery/v2.0/Instances`,{headers:{Authorization:"Bearer "+disco.accessToken}}).then(r=>r.json());
-    const envs = (inst.value||[]).filter(e=>e.ApiUrl);
-    if (!envs.length) throw new Error("No Power Platform environments found for this account.");
-    let env = envs[0];
-    if (envs.length>1){ const sel=$("envSel"); if(!sel.classList.contains("show")){
-      sel.classList.add("show"); sel.innerHTML=envs.map((e,i)=>`<option value="${i}">${e.FriendlyName} — ${e.ApiUrl}</option>`).join("");
-      log("→ Choose an environment above, then click Deploy again.","step"); $("go").disabled=false; return; }
-      env = envs[+sel.value||0]; }
-    log(`→ Target: ${env.FriendlyName} (${env.ApiUrl})`,"step");
-    const tok = await pca.acquireTokenSilent({account,scopes:[`${env.ApiUrl}/user_impersonation`]}).catch(()=>pca.acquireTokenPopup({scopes:[`${env.ApiUrl}/user_impersonation`]}));
-    log("→ Downloading solution…","step");
-    const zip = await fetch(ACTIVE.solutionUrl).then(r=>r.arrayBuffer());
-    log("→ Importing into Copilot Studio (can take a minute)…","step");
-    const h={Authorization:"Bearer "+tok.accessToken,"Content-Type":"application/json","OData-MaxVersion":"4.0","OData-Version":"4.0",Accept:"application/json"};
-    const imp = await fetch(`${env.ApiUrl}/api/data/v9.2/ImportSolution`,{method:"POST",headers:h,
-      body:JSON.stringify({OverwriteUnmanagedCustomizations:true,PublishWorkflows:true,ImportJobId:uuid(),CustomizationFile:b64(zip)})});
-    if(!imp.ok && imp.status!==204) throw new Error("Import failed: "+(await imp.text()));
-    await fetch(`${env.ApiUrl}/api/data/v9.2/PublishAllXml`,{method:"POST",headers:h,body:"{}"});
-    log("✅ Done — your agent is live in Copilot Studio.","ok");
-    log(`→ Open <a href="https://copilotstudio.microsoft.com/" target="_blank">copilotstudio.microsoft.com</a>`,"ok");
-    $("go").textContent="Deployed ✓";
-  } catch(e){ log("✗ "+(e.message||e),"err"); terminalMode(); $("go").disabled=false; }
+  setBtn();
+}
+$("bsRecheck").onclick = pollBrainstem;
+$("bsCmd").onclick = () => { navigator.clipboard.writeText($("bsCmd").textContent); };
+
+// ---- drive the local /chat ----
+async function chat(userInput){
+  const body = {user_input:userInput}; if(SESSION) body.session_id=SESSION;
+  const r = await fetch(BS+"/chat",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)}).then(r=>r.json());
+  SESSION = r.session_id || SESSION;
+  return r;
+}
+// pull the last JSON object emitted by the agent out of agent_logs (brace-matched)
+function agentResult(logs){
+  if(!logs) return null; let found=null;
+  for(let i=0;i<logs.length;i++){
+    if(logs[i]!=='{') continue;
+    let d=0;
+    for(let j=i;j<logs.length;j++){
+      if(logs[j]==='{')d++; else if(logs[j]==='}'){d--; if(d===0){
+        try{const o=JSON.parse(logs.slice(i,j+1)); if(o&&o.status) found=o;}catch(_){}
+        i=j; break; }}
+    }
+  }
+  return found;
+}
+
+async function deploy(){
+  if(!bsUp||!ACTIVE) return;
+  $("go").disabled=true; $("auth").classList.remove("show"); $("log").classList.add("show"); $("log").innerHTML="";
+  try{
+    let instr;
+    if(ACTIVE.mode==="ready"){
+      log(`→ Asking your brainstem to deploy “${ACTIVE.label}”…`,"step");
+      instr = `Call the CopilotStudioDeploy agent with action="deploy" and solution_url="${ACTIVE.solutionUrl}". Do not ask me questions — run it and report the device-login user_code and verification URL it returns.`;
+    } else {
+      log(`→ Converting “${ACTIVE.label}” via your brainstem (Copilot models author it)…`,"step");
+      instr = `Use the CopilotStudioDeploy agent. First action="fetch_source" with source_url="${ACTIVE.source}". Read the source, then write a short display name and a detailed Copilot Studio instructions prompt for it. Then action="package" with that agent_name and instructions. Then action="deploy" with the returned package_id. Report the device-login user_code and verification URL.`;
+    }
+    const r = await chat(instr);
+    const res = agentResult(r.agent_logs);
+    if(!res){ log("✗ The brainstem didn’t run the deploy agent. Response:","err"); log(`<span class="muted">${(r.response||"").slice(0,300)}</span>`); $("go").disabled=false; return; }
+    if(res.status==="error"){ log("✗ "+res.message,"err"); $("go").disabled=false; return; }
+    if(res.status==="auth_required"){
+      DEVICE = res.device_code;
+      $("authCode").textContent = res.user_code;
+      $("authUrl").href = res.verification_uri || "https://microsoft.com/devicelogin";
+      $("authUrl").textContent = (res.verification_uri||"microsoft.com/devicelogin").replace(/^https?:\/\//,"");
+      $("auth").classList.add("show");
+      log("✓ Packaged. Sign in with the code shown below to finish.","ok");
+    } else { log("→ "+(res.message||JSON.stringify(res))); $("go").disabled=false; }
+  }catch(e){ log("✗ "+(e.message||e),"err"); $("go").disabled=false; }
 }
 $("go").onclick = deploy;
-loadCatalog();
-if (!browserReady) $("term").classList.add("show");
+
+$("authDone").onclick = async ()=>{
+  $("authDone").disabled=true; log("→ Finishing import…","step");
+  try{
+    const r = await chat(`Call the CopilotStudioDeploy agent with action="complete_deploy" and device_code="${DEVICE}". Report the result.`);
+    const res = agentResult(r.agent_logs);
+    if(res && res.status==="success"){
+      log(`✅ ${res.message||"Deployed."}`,"ok");
+      log(`→ Open <a href="https://copilotstudio.microsoft.com/" target="_blank">copilotstudio.microsoft.com</a>`,"ok");
+      $("auth").classList.remove("show"); $("go").textContent="Deployed ✓";
+    } else if(res && res.status==="choose_environment"){
+      log("→ You have multiple environments — type the target URL when prompted (rerun).","step");
+      log(`<span class="muted">${(res.environments||[]).map(e=>e.url).join("  ·  ")}</span>`);
+      $("authDone").disabled=false;
+    } else if(res && res.status==="pending"){
+      log("→ Sign-in not detected yet — finish the code, then click again.","muted"); $("authDone").disabled=false;
+    } else { log("✗ "+((res&&res.message)|| (r.response||"").slice(0,300)),"err"); $("authDone").disabled=false; }
+  }catch(e){ log("✗ "+(e.message||e),"err"); $("authDone").disabled=false; }
+};
+
+loadCatalog(); pollBrainstem(); setInterval(()=>{ if(!bsUp) pollBrainstem(); }, 5000);
 </script>
 </body>
 </html>
