@@ -11,6 +11,25 @@ Sign in once and the agent imports itself — no downloads, no manual solution i
 
 ---
 
+## Brainstem-native: one `agent.py`, dropped into the kernel
+The whole capability is a single RAPP agent — [`copilot_deploy_agent.py`](copilot_deploy_agent.py).
+Drop it into your brainstem's `agents/` folder and just chat:
+
+> *"Convert https://raw.githubusercontent.com/…/my_agent.py and deploy it to my Copilot Studio environment."*
+
+The kernel's Copilot model reads the agent, authors the Copilot Studio instructions, and the agent packages
+a valid solution and imports it into your environment (device-code sign-in). `action=list_catalog` lists the
+ready-made agents. Install:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/kody-w/rapp-oneclick-deploy/main/copilot_deploy_agent.py \
+  -o ~/.brainstem/src/rapp_brainstem/agents/copilot_deploy_agent.py
+```
+
+The kernel reloads agents on every `/chat`, so it's live immediately (verified: `CopilotStudioDeploy`
+appears in `/health` and runs end-to-end). The standalone CLI/browser paths below are the same engine for
+people who aren't running a brainstem.
+
 ## Three ways to feed the pipe
 
 1. **Pick from the catalog** — agents sourced from [`kody-w/AI-Agent-Templates`](https://kody-w.github.io/AI-Agent-Templates/)
