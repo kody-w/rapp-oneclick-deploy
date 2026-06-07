@@ -11,24 +11,25 @@ Sign in once and the agent imports itself — no downloads, no manual solution i
 
 ---
 
-## Brainstem-native: one `agent.py`, dropped into the kernel
-The whole capability is a single RAPP agent — [`copilot_deploy_agent.py`](copilot_deploy_agent.py).
-Drop it into your brainstem's `agents/` folder and just chat:
+## Two ways to run it
 
-> *"Convert https://raw.githubusercontent.com/…/my_agent.py and deploy it to my Copilot Studio environment."*
-
-The kernel's Copilot model reads the agent, authors the Copilot Studio instructions, and the agent packages
-a valid solution and imports it into your environment (device-code sign-in). `action=list_catalog` lists the
-ready-made agents. Install:
+### A) Drop-in agent — no UI, chat-driven (the simplest)
+Drop **one file** into your brainstem's `agents/` folder and just chat — no UI, no extra port:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/kody-w/rapp-oneclick-deploy/main/copilot_deploy_agent.py \
-  -o ~/.brainstem/src/rapp_brainstem/agents/copilot_deploy_agent.py
+curl -fsSL "https://raw.githubusercontent.com/kody-w/rapp-oneclick-deploy/main/apps/@kody-w/copilot_studio_deploy/singleton/copilot_studio_deploy_agent.py" \
+  -o ~/.brainstem/src/rapp_brainstem/agents/copilot_studio_deploy_agent.py
 ```
+Then:
+> *"Find me a proposal agent to deploy to Copilot Studio."* → it **searches [AI-Agent-Templates](https://github.com/kody-w/AI-Agent-Templates)** (the default source), you pick one, the kernel's Copilot model authors the instructions, and it packages + deploys into your environment.
 
-The kernel reloads agents on every `/chat`, so it's live immediately (verified: `CopilotStudioDeploy`
-appears in `/health` and runs end-to-end). The standalone CLI/browser paths below are the same engine for
-people who aren't running a brainstem.
+Sources accepted: an **AI-Agent-Templates** template (default · `action=search_templates`), **any public GitHub raw `agent.py` URL**, or a **local file path**. Actions: `search_templates · list_catalog · fetch_source · package · deploy · complete_deploy · set_credentials · credentials_status · deploy_with_credentials`. The kernel reloads agents every `/chat`, so it's live immediately (verified: appears in `/health`, runs end-to-end).
+
+### B) Full rapplication — egg + local UI
+The same capability packaged as a spec-compliant **RAPP rapplication** ([`apps/@kody-w/copilot_studio_deploy`](apps/@kody-w/copilot_studio_deploy)) — agent + cartridge UI, `brainstem-egg/2.2-rapplication`, Eternity rappid. Hatch it:
+> *"hatch https://raw.githubusercontent.com/kody-w/rapp-oneclick-deploy/main/api/v1/egg/copilot_studio_deploy.egg"*
+
+served locally at `/rapp_ui/copilot_studio_deploy/`. Same engine as (A), with a UI.
 
 ## Three ways to feed the pipe
 

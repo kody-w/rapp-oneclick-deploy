@@ -81,5 +81,40 @@ def test_deploy_then_complete(monkeypatch):
     assert dc not in cda._CACHE  # consumed
 
 
+def test_search_templates_default_repo(monkeypatch):
+    fake_tree = {"tree": [
+        {"type": "blob", "path": "agent_stacks/b2b_sales_stacks/proposal_generation_stack/agents/proposal_generation_agent.py"},
+        {"type": "blob", "path": "agent_stacks/b2b_sales_stacks copy 2/x/agents/x_agent.py"},  # 'copy' -> skipped
+        {"type": "blob", "path": "README.md"},  # not an agent
+    ]}
+    monkeypatch.setattr(cda, "_req", lambda url, **k: (200, fake_tree))
+    r = json.loads(agent().perform(action="search_templates", query="proposal"))
+    assert r["status"] == "success" and r["repo"] == "kody-w/AI-Agent-Templates"
+    assert r["count"] == 1
+    t = r["templates"][0]
+    assert t["name"] == "Proposal Generation" and t["stack"] == "proposal_generation_stack"
+    assert t["raw_url"].startswith("https://raw.githubusercontent.com/kody-w/AI-Agent-Templates/main/")
+
+
+def test_fetch_source_local_file(tmp_path):
+    p = tmp_path / "my_agent.py"
+    p.write_text("class MyLocalAgent:\n    '''local'''\n    pass\n")
+    r = json.loads(agent().perform(action="fetch_source", source_url=str(p)))
+    assert r["status"] == "success" and r["origin"] == "local-file"
+    assert "MyLocalAgent" in r["source"]
+
+
+def test_fetch_source_public_url(monkeypatch):
+    monkeypatch.setattr(cda, "_get_bytes", lambda url, **k: b"class WebAgent:\n    pass\n")
+    r = json.loads(agent().perform(action="fetch_source",
+                                   source_url="https://raw.githubusercontent.com/x/y/main/a_agent.py"))
+    assert r["status"] == "success" and r["origin"] == "url" and "WebAgent" in r["source"]
+
+
+def test_fetch_source_missing():
+    r = json.loads(agent().perform(action="fetch_source", source_url="/no/such/file_agent.py"))
+    assert r["status"] == "error"
+
+
 def test_unknown_action():
     assert json.loads(agent().perform(action="nope"))["status"] == "error"

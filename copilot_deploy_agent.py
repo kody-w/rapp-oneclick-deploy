@@ -21,6 +21,7 @@ import base64, io, json, os, re, time, urllib.request, urllib.parse, uuid, zipfi
 from openrappter.agents.basic_agent import BasicAgent
 
 REPO_RAW = "https://raw.githubusercontent.com/kody-w/rapp-oneclick-deploy/main"
+TEMPLATES_REPO = "kody-w/AI-Agent-Templates"   # default source of deployable agents
 PUBLIC_CLIENT = "9cee029c-6210-4654-90bb-17e6e9d36617"   # Power Platform CLI public client
 AUTH = "https://login.microsoftonline.com"
 DISCO = "https://globaldisco.crm.dynamics.com"
@@ -45,6 +46,44 @@ def _req(url, data=None, headers=None, method=None, timeout=300):
         try: body = json.loads(body)
         except Exception: pass
         return e.code, body
+
+def _search_templates(query="", repo=TEMPLATES_REPO, limit=60):
+    """Search a public GitHub repo (default: AI-Agent-Templates) for deployable
+    agent.py files. Returns [{name, path, stack, raw_url}]."""
+    code, tree = _req(f"https://api.github.com/repos/{repo}/git/trees/HEAD?recursive=1",
+                      headers={"Accept": "application/vnd.github+json", "User-Agent": "rapp"})
+    if code != 200 or not isinstance(tree, dict) or "tree" not in tree:
+        raise RuntimeError(f"could not list {repo} ({code}) — check the repo name or GitHub rate limit")
+    q = (query or "").lower()
+    out = []
+    for b in tree["tree"]:
+        p = b.get("path", "")
+        if b.get("type") != "blob" or not re.search(r"/agents/[^/]*agent\.py$", p):
+            continue
+        if any(x in p.lower() for x in ("copy", "experimental", "__pycache__", "disabled", "/tests/")):
+            continue
+        if q and q not in p.lower():
+            continue
+        m = re.search(r"/([^/]+_stack)/", p)
+        out.append({"name": p.rsplit("/", 1)[-1].replace("_agent.py", "").replace("_", " ").title(),
+                    "path": p, "stack": m.group(1) if m else None,
+                    "raw_url": f"https://raw.githubusercontent.com/{repo}/main/" + urllib.parse.quote(p)})
+        if len(out) >= limit:
+            break
+    return out
+
+
+def _read_source(src):
+    """Read an agent.py from a public URL OR a local file path."""
+    src = (src or "").strip()
+    if src.startswith(("http://", "https://")):
+        return _get_bytes(src).decode("utf-8", "replace")
+    local = os.path.expanduser(src)
+    if os.path.isfile(local):
+        with open(local, "r", encoding="utf-8", errors="replace") as f:
+            return f.read()
+    raise FileNotFoundError("provide a raw GitHub URL or an existing local file path")
+
 
 def _get_bytes(url, timeout=120):
     with urllib.request.urlopen(urllib.request.Request(url, headers={"User-Agent": "rapp"}), timeout=timeout) as r:
@@ -166,21 +205,25 @@ class CopilotStudioDeployAgent(BasicAgent):
             "name": self.name,
             "description": (
                 "Convert and deploy a RAPP agent into the user's own Microsoft Copilot Studio "
-                "environment. Workflow: (1) action=fetch_source with a raw agent.py URL to read it, "
-                "then YOU author a short display name + a detailed Copilot Studio instructions prompt; "
-                "(2) action=package with agent_name + instructions to build the solution; "
+                "environment. To find agents, DEFAULT to action=search_templates (searches the "
+                "kody-w/AI-Agent-Templates repo) — pass an optional query to filter. The source for a "
+                "deploy can be (a) a template raw_url from search_templates, (b) ANY public GitHub raw "
+                "agent.py URL, or (c) a LOCAL file path. Workflow: (1) action=fetch_source with that "
+                "source (URL or local path) to read it, then YOU author a short display name + a detailed "
+                "Copilot Studio instructions prompt; (2) action=package with agent_name + instructions; "
                 "(3) action=deploy with the returned package_id (or a solution_url for a prebuilt agent) "
-                "to start sign-in and relay the code to the user; (4) action=complete_deploy with the "
-                "device_code once they have signed in. Use action=list_catalog to show ready-made agents. "
-                "If credentials_status shows found=true (the user saved a service-principal local.settings.json "
-                "via set_credentials), prefer action=deploy_with_credentials (solution_url or package_id) — it "
-                "deploys autonomously with NO device login."),
+                "to start sign-in and relay the code; (4) action=complete_deploy with the device_code once "
+                "signed in. action=list_catalog shows pre-converted ready-to-deploy solutions. "
+                "If credentials_status shows found=true (saved service-principal local.settings.json via "
+                "set_credentials), prefer action=deploy_with_credentials — deploys autonomously, NO login."),
             "parameters": {"type": "object", "properties": {
-                "action": {"type": "string", "enum": ["list_catalog", "fetch_source", "package",
-                                                       "deploy", "complete_deploy",
+                "action": {"type": "string", "enum": ["search_templates", "list_catalog", "fetch_source",
+                                                       "package", "deploy", "complete_deploy",
                                                        "set_credentials", "credentials_status",
                                                        "deploy_with_credentials"]},
-                "source_url": {"type": "string", "description": "raw agent.py URL (fetch_source)"},
+                "query": {"type": "string", "description": "optional filter for search_templates"},
+                "repo": {"type": "string", "description": "optional public repo for search_templates (default kody-w/AI-Agent-Templates)"},
+                "source_url": {"type": "string", "description": "raw agent.py URL OR a local file path (fetch_source)"},
                 "agent_name": {"type": "string", "description": "human display name (package)"},
                 "instructions": {"type": "string", "description": "Copilot Studio system instructions you authored (package)"},
                 "unique_name": {"type": "string", "description": "optional lowercase id (package)"},
@@ -198,6 +241,12 @@ class CopilotStudioDeployAgent(BasicAgent):
     def perform(self, **kwargs):
         action = (kwargs.get("action") or "").strip()
         try:
+            if action == "search_templates":
+                tpls = _search_templates(kwargs.get("query", ""), kwargs.get("repo") or TEMPLATES_REPO)
+                return json.dumps({"status": "success", "repo": kwargs.get("repo") or TEMPLATES_REPO,
+                                   "count": len(tpls), "templates": tpls,
+                                   "next": "Pick a raw_url, then action=fetch_source with it (or any public URL / local path)."})
+
             if action == "list_catalog":
                 cat = json.loads(_get_bytes(f"{REPO_RAW}/catalog/agents.json").decode())
                 return json.dumps({"status": "success", "agents": [
@@ -207,11 +256,13 @@ class CopilotStudioDeployAgent(BasicAgent):
                      "source": a.get("source")} for a in cat.get("agents", [])]})
 
             if action == "fetch_source":
-                src = kwargs.get("source_url", "")
-                if not src.startswith("http"):
-                    return json.dumps({"status": "error", "message": "source_url (raw agent.py URL) required"})
-                text = _get_bytes(src).decode("utf-8", "replace")
-                return json.dumps({"status": "success", "source_url": src, "length": len(text),
+                src = kwargs.get("source_url") or kwargs.get("source") or kwargs.get("path") or ""
+                try:
+                    text = _read_source(src)   # public URL OR local file path
+                except (FileNotFoundError, Exception) as e:
+                    return json.dumps({"status": "error", "message": str(e)})
+                origin = "url" if src.strip().startswith("http") else "local-file"
+                return json.dumps({"status": "success", "source_ref": src, "origin": origin, "length": len(text),
                                    "source": text[:12000],
                                    "next": "Author agent_name + instructions, then call action=package."})
 
