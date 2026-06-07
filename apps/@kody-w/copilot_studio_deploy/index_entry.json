@@ -1,0 +1,17 @@
+{
+  "id": "copilot_studio_deploy",
+  "name": "Copilot Studio Deploy",
+  "version": "1.0.0",
+  "summary": "Convert any RAPP agent and deploy it into your own Microsoft Copilot Studio environment, fully locally. Import a local.settings.json service principal for autonomous one-click deploy; credentials never leave your machine.",
+  "category": "platform",
+  "tags": [
+    "rapplication",
+    "copilot-studio",
+    "power-platform",
+    "deploy",
+    "local-first",
+    "has-ui"
+  ],
+  "singleton_filename": "copilot_studio_deploy_agent.py",
+  "singleton_url": "https://raw.githubusercontent.com/kody-w/rapp-oneclick-deploy/main/apps/@kody-w/copilot_studio_deploy/singleton/copilot_studio_deploy_agent.py"
+}

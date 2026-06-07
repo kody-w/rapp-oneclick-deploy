@@ -1,0 +1,15 @@
+{
+  "schema": "rapp-rappid/2.0",
+  "rappid": "rappid:@kody-w/copilot_studio_deploy:5fe751988016182c5171072328cdd94a7b5afc3aee22051f45d79f18084fed74",
+  "kind": "rapplication",
+  "name": "copilot_studio_deploy",
+  "display_name": "Copilot Studio Deploy",
+  "github": "https://github.com/kody-w/rapp-oneclick-deploy",
+  "url": "https://kody-w.github.io/rapp-oneclick-deploy/",
+  "parent_rappid": "rappid:@rapp/origin:0b635450c04249fbb4b1bdb571044dec",
+  "parent_repo": "https://github.com/kody-w/RAPP",
+  "born_at": "2026-06-07T00:00:00Z",
+  "planted_by": "kody-w",
+  "planted_at": "2026-06-07T00:00:00Z",
+  "kernel_version": "0.6.0"
+}

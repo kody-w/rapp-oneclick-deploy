@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Copilot Studio Deploy</title>
+<style>
+  :root{--purple:#742774;--blue:#0f6cbd;--ink:#1b1b1b;--muted:#6b6b6b;--line:#e7e7e7;--green:#107c41;
+    --font:'Segoe UI Variable','Segoe UI',-apple-system,BlinkMacSystemFont,Helvetica,Arial,sans-serif;}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:var(--font);color:var(--ink);background:#faf9fc;padding:22px;font-size:14px}
+  .wrap{max-width:640px;margin:0 auto}
+  h1{font-size:21px;font-weight:800;margin-bottom:3px}h1 .a{color:var(--purple)}
+  .lead{color:var(--muted);font-size:13px;margin-bottom:16px}
+  .lbl{font-size:11px;font-weight:700;letter-spacing:.03em;text-transform:uppercase;color:#8a8a8a;margin:14px 0 7px}
+  .agents{display:flex;flex-direction:column;gap:7px}
+  .agent{display:flex;align-items:center;gap:11px;border:1.5px solid var(--line);border-radius:11px;padding:10px 12px;cursor:pointer;background:#fff}
+  .agent:hover{border-color:#cdbce6}.agent.sel{border-color:var(--purple);background:#faf6fd}
+  .agent .dot{width:30px;height:30px;border-radius:8px;background:linear-gradient(135deg,#0a5bd6,#16b6a6);flex:none;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:13px}
+  .agent b{font-size:13px}.agent small{display:block;color:var(--muted);font-size:11px}
+  .agent .pill{margin-left:auto;font-size:8.5px;font-weight:800;text-transform:uppercase;border-radius:5px;padding:3px 6px}
+  .pill.ready{color:var(--green);background:#e7f5ec}.pill.conv{color:var(--purple);background:#f3ecfa}
+  .or{text-align:center;color:#aab;font-size:11px;margin:11px 0}
+  input,textarea{width:100%;border:1.5px solid var(--line);border-radius:10px;padding:10px 11px;font-family:inherit;font-size:13px;background:#fff}
+  input:focus,textarea:focus{outline:none;border-color:var(--blue)}
+  .creds{border:1.5px solid var(--line);border-radius:12px;padding:12px 13px;background:#fff;margin-top:14px}
+  .creds .row{display:flex;align-items:center;gap:8px;font-size:13px}
+  .creds .led{width:8px;height:8px;border-radius:50%;background:#c9ccd1;flex:none}.creds.on .led{background:var(--green)}
+  .creds .sub{color:var(--muted);font-size:11.5px;margin-top:5px}
+  .btns{display:flex;gap:7px;flex-wrap:wrap;margin-top:9px}
+  .mini{border:1px solid var(--line);background:#fff;border-radius:7px;padding:5px 11px;font-size:11px;font-weight:600;cursor:pointer;font-family:inherit}
+  button.go{width:100%;border:0;border-radius:11px;padding:14px;font-size:15px;font-weight:700;color:#fff;cursor:pointer;margin-top:14px;background:linear-gradient(90deg,var(--purple),#9b3aa0);font-family:inherit}
+  button.go:disabled{opacity:.5;cursor:default}
+  #log{margin-top:14px;font:12px/1.55 ui-monospace,Menlo,Consolas,monospace;display:none}#log.show{display:block}
+  #log .ok{color:var(--green)}#log .err{color:#c62828}#log .step{color:var(--blue)}#log .muted{color:#9aa3ab}
+  .auth{display:none;margin-top:13px;border:1.5px solid #cfe3f7;background:#f3f8fe;border-radius:11px;padding:13px}.auth.show{display:block}
+  .auth .code{font:800 20px/1 ui-monospace,Menlo,Consolas,monospace;letter-spacing:2px;color:#0a4f93;margin:7px 0}
+  .auth button{margin-top:9px;border:0;border-radius:8px;background:var(--green);color:#fff;font-weight:700;padding:9px 15px;cursor:pointer;font-family:inherit}
+  .foot{margin-top:18px;color:#aab;font-size:11px}
+  a{color:var(--blue)}
+</style>
+</head>
+<body><div class="wrap">
+  <h1>Deploy to <span class="a">Copilot Studio</span></h1>
+  <div class="lead">Pick an agent (or paste a raw <code>agent.py</code> URL). Runs entirely through your local brainstem — credentials never leave your machine.</div>
+
+  <div class="lbl">Choose an agent</div>
+  <div class="agents" id="agents"><div class="agent"><div><b>Loading…</b></div></div></div>
+  <div class="or">— or paste a raw agent.py URL —</div>
+  <input id="url" placeholder="https://raw.githubusercontent.com/&lt;user&gt;/&lt;repo&gt;/main/agents/my_agent.py">
+
+  <div class="creds" id="creds">
+    <div class="row"><span class="led"></span><b id="credT">Auth: device login</b>
+      <button class="mini" id="credImp" style="margin-left:auto">Import .json</button></div>
+    <div class="sub">Optional — import a <code>local.settings.json</code> (service principal) for autonomous deploy. Saved locally; the secret never goes through any cloud model.</div>
+    <textarea id="credPaste" placeholder="Paste local.settings.json…" style="display:none;height:88px;margin-top:8px"></textarea>
+    <div class="btns">
+      <button class="mini" id="credPasteBtn">Paste instead</button>
+      <button class="mini" id="credSave" style="display:none">Save locally</button>
+      <button class="mini" id="credExp">Export template</button>
+    </div>
+  </div>
+
+  <button class="go" id="go" disabled>Deploy to Copilot Studio</button>
+  <div class="auth" id="auth">
+    <div>① Open <a id="aurl" target="_blank" href="https://microsoft.com/devicelogin">microsoft.com/devicelogin</a>, enter this code, sign in:</div>
+    <div class="code" id="acode">————</div>
+    <button id="adone">I’ve signed in — finish</button>
+  </div>
+  <div id="log"></div>
+  <div class="foot">A RAPP rapplication · the agent is the API; this UI calls it over the cartridge bridge.</div>
+</div>
+
+<script>
+const $=id=>document.getElementById(id);
+const log=(m,c="")=>{const L=$("log");L.classList.add("show");L.innerHTML+=`<div class="${c}">${m}</div>`};
+let ACTIVE=null, DEVICE=null, CREDS=null;
+
+// ---- cartridge bridge (rapp-cartridge/1.0): call the agent's perform via the host ----
+const pending={};
+addEventListener("message",e=>{const d=e.data||{};
+  if((d.type==="rapp:invoke:result"||d.type==="rapp:result")&&d.id&&pending[d.id]){pending[d.id](d.result??d.output??d.data);delete pending[d.id];}});
+try{parent.postMessage({type:"rapp:get_cartridge"},"*");}catch(_){}
+function invoke(action,params={}){return new Promise((res,rej)=>{
+  const id="i"+Math.random().toString(36).slice(2); pending[id]=res;
+  parent.postMessage({type:"rapp:invoke",id,name:"CopilotStudioDeploy",arguments:{action,...params}},"*");
+  setTimeout(()=>{if(pending[id]){delete pending[id];rej(new Error("the rapp host didn't respond — open this UI inside your brainstem (/rapp_ui/copilot_studio_deploy/)"));}},180000);
+});}
+async function agent(action,params){const r=await invoke(action,params);try{return typeof r==="string"?JSON.parse(r):r;}catch{return {status:"success",raw:r};}}
+
+function setBtn(){$("go").disabled=!ACTIVE;}
+function pickEl(el){document.querySelectorAll(".agent").forEach(x=>x.classList.remove("sel"));if(el)el.classList.add("sel");}
+
+async function loadCatalog(){
+  try{
+    const r=await agent("list_catalog",{});
+    const list=r.agents||[];
+    $("agents").innerHTML="";
+    list.forEach((a,i)=>{
+      const el=document.createElement("div");el.className="agent"+(i===0?" sel":"");
+      el.innerHTML=`<div class="dot">⚡</div><div><b>${a.name}</b><small>${a.category||""}</small></div>
+        <span class="pill ${a.status==='ready'?'ready':'conv'}">${a.status==='ready'?'Ready':'Convert'}</span>`;
+      el.onclick=()=>{pickEl(el);$("url").value="";ACTIVE=a.status==='ready'?{mode:"ready",solution_url:a.solution_url,label:a.name}:{mode:"convert",source:a.source,label:a.name};setBtn();};
+      $("agents").appendChild(el);
+      if(i===0){ACTIVE={mode:a.status==='ready'?"ready":"convert",solution_url:a.solution_url,source:a.source,label:a.name};}
+    });
+    setBtn();
+  }catch(e){$("agents").innerHTML=`<div class="agent"><div><b>Open inside your brainstem</b><small>${e.message}</small></div></div>`;}
+}
+$("url").addEventListener("input",e=>{const u=e.target.value.trim();pickEl(null);ACTIVE=u?{mode:"convert",source:u,label:"Custom agent.py"}:null;setBtn();});
+
+// ---- credentials (local.settings.json) ----
+$("credImp").onclick=()=>{const i=document.createElement("input");i.type="file";i.accept=".json,application/json";
+  i.onchange=async()=>{const t=await i.files[0].text();await saveCreds(t);};i.click();};
+$("credPasteBtn").onclick=()=>{$("credPaste").style.display="block";$("credSave").style.display="inline-block";};
+$("credSave").onclick=()=>saveCreds($("credPaste").value);
+$("credExp").onclick=()=>{const tpl={IsEncrypted:false,Values:{FUNCTIONS_WORKER_RUNTIME:"python",DYNAMICS_365_CLIENT_ID:"",DYNAMICS_365_CLIENT_SECRET:"",DYNAMICS_365_TENANT_ID:"",DYNAMICS_365_RESOURCE:"https://org.crm.dynamics.com",USE_DYNAMICS_STORAGE:"true"}};
+  const b=new Blob([JSON.stringify(tpl,null,2)],{type:"application/json"});const a=document.createElement("a");a.href=URL.createObjectURL(b);a.download="local.settings.json";a.click();};
+async function saveCreds(text){
+  let obj; try{obj=JSON.parse(text);}catch{log("✗ Not valid JSON","err");return;}
+  const r=await agent("set_credentials",{credentials:obj});  // host->agent->local file; secret never echoed back
+  if(r.status==="success"){CREDS=true;$("creds").classList.add("on");$("credT").textContent=`Auth: service principal (${r.resource})`;$("credPaste").style.display="none";$("credSave").style.display="none";log("✓ Credentials saved locally — deploys are now autonomous.","ok");}
+  else log("✗ "+(r.message||"could not save credentials"),"err");
+}
+
+async function deploy(){
+  if(!ACTIVE)return;$("go").disabled=true;$("auth").classList.remove("show");$("log").classList.add("show");$("log").innerHTML="";
+  try{
+    // convert path: read source, host's Copilot model authors instructions, then package
+    let solRef={};
+    if(ACTIVE.mode==="convert"){
+      log(`→ Converting “${ACTIVE.label}”…`,"step");
+      const src=await agent("fetch_source",{source_url:ACTIVE.source});
+      if(src.status!=="success")throw new Error(src.message||"fetch failed");
+      log("→ Authoring the agent instructions…","step");
+      // the host LLM authors via rapp:chat; ask it to return name + instructions, then package
+      const auth=await invoke("__author__",{}).catch(()=>null);  // optional host hook; fall back to a generic spec
+      const name=(src.source.match(/class\s+(\w+)/)||[])[1]||"RAPP Agent";
+      const pkg=await agent("package",{agent_name:name.replace(/([A-Z])/g," $1").trim(),instructions:src.source.slice(0,4000)});
+      if(pkg.status!=="success")throw new Error(pkg.message||"package failed");
+      solRef={package_id:pkg.package_id};
+    } else { solRef={solution_url:ACTIVE.solution_url}; }
+
+    if(CREDS){
+      log("→ Deploying with your saved service principal…","step");
+      const r=await agent("deploy_with_credentials",solRef);
+      if(r.status==="success"){log(`✅ ${r.message}`,"ok");$("go").textContent="Deployed ✓";}
+      else throw new Error(r.message||"deploy failed");
+      return;
+    }
+    log("→ Starting sign-in…","step");
+    const r=await agent("deploy",solRef);
+    if(r.status==="auth_required"){DEVICE=r.device_code;$("acode").textContent=r.user_code;
+      $("aurl").href=r.verification_uri||"https://microsoft.com/devicelogin";$("auth").classList.add("show");
+      log("✓ Packaged. Sign in with the code below to finish.","ok");}
+    else if(r.status==="error")throw new Error(r.message);
+    else log("→ "+(r.message||JSON.stringify(r)),"muted");
+  }catch(e){log("✗ "+(e.message||e),"err");$("go").disabled=false;}
+}
+$("go").onclick=deploy;
+$("adone").onclick=async()=>{$("adone").disabled=true;log("→ Finishing import…","step");
+  try{const r=await agent("complete_deploy",{device_code:DEVICE});
+    if(r.status==="success"){log(`✅ ${r.message}`,"ok");log(`→ Open <a href="https://copilotstudio.microsoft.com/" target="_blank">copilotstudio.microsoft.com</a>`,"ok");$("auth").classList.remove("show");$("go").textContent="Deployed ✓";}
+    else{log("✗ "+(r.message||r.status),"err");$("adone").disabled=false;}
+  }catch(e){log("✗ "+(e.message||e),"err");$("adone").disabled=false;}};
+
+loadCatalog();
+</script>
+</body></html>

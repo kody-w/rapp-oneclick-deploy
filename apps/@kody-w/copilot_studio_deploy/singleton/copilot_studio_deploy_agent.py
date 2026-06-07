@@ -1,24 +1,57 @@
 """
-CopilotStudioDeploy — a RAPP brainstem agent.
-=============================================
-Drop this single file into the brainstem's `agents/` folder. The kernel's Copilot
-LLM does the reasoning (reads an agent.py, authors the Copilot Studio instructions,
-picks the environment from the conversation) and calls this agent to do the
-deterministic work: package a valid solution and import it into the user's own
-Copilot Studio environment.
+CopilotStudioDeploy — a RAPP rapplication (agent + local UI).
 
-Self-contained, stdlib only. Public assets (system skeleton + prebuilt catalog)
-are pulled from https://github.com/kody-w/rapp-oneclick-deploy.
+Convert any RAPP agent into a Microsoft Copilot Studio agent and deploy it into
+YOUR OWN Copilot Studio environment, fully locally. No PII or secrets ship with
+this agent — you provide a local.settings.json (service principal) at deploy
+time and it is used and stored ONLY on your machine.
 
-Actions (the `action` parameter):
-  list_catalog     -> available agents (prebuilt + convert-from-source)
-  fetch_source     -> fetch an agent.py from a raw URL (so the LLM can author instructions)
-  package          -> {agent_name, instructions} -> a packaged solution (cached, returns package_id)
-  deploy           -> {solution_url|package_id} -> begin device-code sign-in (returns code to relay)
-  complete_deploy  -> {device_code} -> finish sign-in, discover env, ImportSolution + publish
+────────────────────────────────────────────────────────────────────────────
+HUMAN — two steps
+  1. Hatch this rapplication:  ask the brainstem  "hatch <egg_url>"  (egg_hatcher),
+     or drop this file into your brainstem's agents/ folder.
+  2. Open the local UI the brainstem serves at  /rapp_ui/copilot_studio_deploy/
+     — pick an agent (or paste a raw agent.py URL), optionally import your
+     local.settings.json credentials, and click Deploy.
+
+LLM — procedure (the agent IS the API; drive it via these actions)
+  list_catalog        -> ready-made + convertible agents (from the public catalog)
+  fetch_source        -> {source_url} returns the agent.py text; YOU then author a
+                         display name + Copilot Studio instructions from it
+  package             -> {agent_name, instructions} -> packaged solution (package_id)
+  deploy              -> {solution_url|package_id} -> begin device-code sign-in
+  complete_deploy     -> {device_code} -> finish, discover env, import + publish
+  set_credentials     -> {credentials: local.settings.json} -> save SP creds LOCALLY
+  credentials_status  -> is a local service principal configured?
+  deploy_with_credentials -> {solution_url|package_id} -> autonomous SP deploy (no login)
+
+  Boundary rules: never echo a client_secret back to the user or into chat; creds
+  live only in ~/.rapp_deploy_settings.json. Prefer deploy_with_credentials when
+  credentials_status reports found=true.
 """
 import base64, io, json, os, re, time, urllib.request, urllib.parse, uuid, zipfile
-from openrappter.agents.basic_agent import BasicAgent
+try:
+    from agents.basic_agent import BasicAgent
+except ImportError:  # pragma: no cover - alternate kernel layouts (SPEC kernel/SPEC.md §5)
+    try:
+        from basic_agent import BasicAgent
+    except ImportError:
+        from openrappter.agents.basic_agent import BasicAgent
+
+__manifest__ = {
+    "schema": "rapp-agent/1.0",
+    "name": "@kody-w/copilot_studio_deploy",
+    "version": "1.0.0",
+    "display_name": "CopilotStudioDeploy",
+    "description": "Convert a RAPP agent and deploy it into your own Microsoft Copilot Studio environment, locally.",
+    "author": "kody-w",
+    "tags": ["rapplication", "copilot-studio", "deploy", "power-platform", "local-first", "has-ui"],
+    "category": "platform",
+    "quality_tier": "community",
+    "requires_env": [],
+    "dependencies": [],
+}
+
 
 REPO_RAW = "https://raw.githubusercontent.com/kody-w/rapp-oneclick-deploy/main"
 PUBLIC_CLIENT = "9cee029c-6210-4654-90bb-17e6e9d36617"   # Power Platform CLI public client

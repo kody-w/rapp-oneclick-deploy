@@ -74,6 +74,21 @@
       <code id="bsCmd" style="display:none">curl -fsSL https://kody-w.github.io/rapp-installer/install.sh | bash</code>
     </div>
 
+    <!-- service-principal credentials (import/export local.settings.json) -->
+    <div class="bs" id="creds" style="margin-top:10px">
+      <div class="row"><span class="led"></span><b id="credTitle">Auth: device login</b>
+        <button class="mini" id="credImport">Import .json</button></div>
+      <div class="sub" id="credSub">Optional — import a <code>local.settings.json</code> service principal for autonomous deploy (no sign-in). Saved locally; the secret never goes through the cloud model.</div>
+      <input type="file" id="credFile" accept=".json,application/json" style="display:none">
+      <textarea id="credPaste" placeholder="Paste local.settings.json here…" style="display:none;width:100%;margin-top:8px;height:88px;border:1.5px solid var(--line);border-radius:9px;padding:9px;font:12px ui-monospace,Menlo,Consolas,monospace"></textarea>
+      <div style="margin-top:9px;display:flex;gap:8px;flex-wrap:wrap">
+        <button class="mini" id="credPasteBtn" style="margin:0">Paste instead</button>
+        <button class="mini" id="credSave" style="margin:0;display:none">Save to brainstem</button>
+        <button class="mini" id="credExport" style="margin:0">Export .json</button>
+        <button class="mini" id="credClear" style="margin:0;display:none">Clear</button>
+      </div>
+    </div>
+
     <button class="deploy" id="go" disabled>Deploy to Copilot Studio</button>
 
     <div class="auth" id="auth">
