@@ -99,7 +99,7 @@ function selectAgent(a, el) {
 
 async function loadCatalog() {
   try {
-    const cat = await fetch("../catalog/agents.json").then(r=>r.json());
+    const cat = await fetch(RAW_BASE + "catalog/agents.json").then(r=>r.json());
     $("agents").innerHTML = "";
     cat.agents.forEach((a,i) => {
       const el = document.createElement("div");
