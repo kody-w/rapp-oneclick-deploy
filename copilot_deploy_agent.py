@@ -249,14 +249,15 @@ class CopilotStudioDeployAgent(BasicAgent):
                 "packages and STARTS the deploy in ONE call — returns a device-login user_code+URL to relay "
                 "(or deploys autonomously if a service principal is saved). Then call action=complete_deploy "
                 "with the device_code once the user signs in. Do NOT re-search; deploy_template handles it. "
-                "Advanced/granular actions (rarely needed): search_templates, fetch_source, package, deploy, "
-                "deploy_with_credentials, list_catalog (pre-converted solutions), set_credentials, "
-                "credentials_status."),
+                "If the user wants a service principal so deploys run with NO sign-in, action=credentials_help "
+                "walks them through creating it, set_credentials saves it locally, and verify_credentials "
+                "confirms it works. Advanced/granular actions: search_templates, fetch_source, package, deploy, "
+                "deploy_with_credentials, list_catalog (pre-converted solutions), credentials_status."),
             "parameters": {"type": "object", "properties": {
                 "action": {"type": "string", "enum": ["deploy_template", "complete_deploy", "search_templates",
                                                        "list_catalog", "fetch_source", "package", "deploy",
-                                                       "set_credentials", "credentials_status",
-                                                       "deploy_with_credentials"]},
+                                                       "credentials_help", "set_credentials", "verify_credentials",
+                                                       "credentials_status", "deploy_with_credentials"]},
                 "query_or_url": {"type": "string", "description": "deploy_template: agent name to search, OR a raw agent.py URL, OR a local path"},
                 "query": {"type": "string", "description": "optional filter for search_templates"},
                 "repo": {"type": "string", "description": "optional public repo for search_templates (default kody-w/AI-Agent-Templates)"},
@@ -396,6 +397,43 @@ class CopilotStudioDeployAgent(BasicAgent):
                 return json.dumps({"status": "success",
                                    "environment": env["FriendlyName"], "environment_url": env["ApiUrl"],
                                    "message": f"Deployed to {env['FriendlyName']}. Open https://copilotstudio.microsoft.com/ to use the agent."})
+
+            if action == "credentials_help":
+                return json.dumps({"status": "success",
+                    "title": "Set up a service principal so deploys run end-to-end with no sign-in",
+                    "steps": [
+                        "1. App registration: https://entra.microsoft.com -> Applications -> App registrations -> New registration. Name it (e.g. 'RAPP Copilot Studio Deploy'), single-tenant, Register.",
+                        "2. On the Overview page copy 'Application (client) ID' -> DYNAMICS_365_CLIENT_ID, and 'Directory (tenant) ID' -> DYNAMICS_365_TENANT_ID.",
+                        "3. Certificates & secrets -> New client secret -> copy the secret VALUE (not the Secret ID) -> DYNAMICS_365_CLIENT_SECRET.",
+                        "4. Give it access to your environment: https://admin.powerplatform.microsoft.com -> pick your environment -> Settings -> Users + permissions -> Application users -> New app user -> add the app -> assign a security role that can import solutions (System Customizer or System Administrator).",
+                        "5. DYNAMICS_365_RESOURCE = your environment URL, e.g. https://yourorg.crm.dynamics.com",
+                        "6. Put those 4 values into a local.settings.json (template below), call action=set_credentials with it, then action=verify_credentials to confirm, then deploy with no sign-in.",
+                    ],
+                    "local_settings_template": {"IsEncrypted": False, "Values": {
+                        "DYNAMICS_365_CLIENT_ID": "<application (client) id>",
+                        "DYNAMICS_365_CLIENT_SECRET": "<client secret value>",
+                        "DYNAMICS_365_TENANT_ID": "<directory (tenant) id>",
+                        "DYNAMICS_365_RESOURCE": "https://yourorg.crm.dynamics.com"}},
+                    "note": "The secret is stored only on your machine (~/.rapp_deploy_settings.json); it is never sent to any cloud model. No service principal? Skip all this — just run a deploy and use the device-login code instead.",
+                    "next": "After set_credentials, call action=verify_credentials, then deploy_template."})
+
+            if action == "verify_credentials":
+                d = _extract_dyn(kwargs["credentials"]) if kwargs.get("credentials") else _load_local_settings()
+                if not d:
+                    return json.dumps({"status": "error", "message": "no credentials — run credentials_help, then set_credentials"})
+                try:
+                    tok = _sp_token(d["client_id"], d["client_secret"], d["tenant_id"], d["resource"])
+                except Exception as e:
+                    return json.dumps({"status": "error", "stage": "token",
+                                       "message": f"Could not get a token — check client id/secret/tenant. ({e})"})
+                code, who = _req(f"{d['resource'].rstrip('/')}/api/data/v9.2/WhoAmI",
+                                 headers={"Authorization": "Bearer " + tok, "Accept": "application/json"})
+                if code == 200 and isinstance(who, dict):
+                    return json.dumps({"status": "success", "resource": d["resource"], "user_id": who.get("UserId"),
+                                       "message": "Service principal works and can reach the environment — ready to deploy with no sign-in."})
+                return json.dumps({"status": "error", "stage": "environment", "http": code,
+                                   "message": "Token OK, but this app can't reach the environment. Add it as an Application User (step 4) with a solution-import role.",
+                                   "detail": str(who)[:300]})
 
             if action == "set_credentials":
                 creds = kwargs.get("credentials")
