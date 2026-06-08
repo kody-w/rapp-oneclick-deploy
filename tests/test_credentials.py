@@ -68,3 +68,17 @@ def test_deploy_with_credentials_errors_without_creds(monkeypatch):
     monkeypatch.setattr(cda, "_load_local_settings", lambda: None)
     r = json.loads(agent().perform(action="deploy_with_credentials", solution_url="https://x/s.zip"))
     assert r["status"] == "error"
+
+
+def test_dataverse_sends_json_body_not_formencoded(monkeypatch):
+    """Regression: the Dataverse Web API needs a JSON body. Form-encoding it caused
+    ImportSolution 0x80048d19 'Stream was not readable'."""
+    cap = {}
+    def fake_req(url, data=None, headers=None, method=None, timeout=300):
+        cap["data"] = data; cap["ct"] = (headers or {}).get("Content-Type"); return 204, ""
+    monkeypatch.setattr(cda, "_req", fake_req)
+    cda._dataverse("https://org.crm.dynamics.com", "tok", "ImportSolution",
+                   {"CustomizationFile": "AAA", "ImportJobId": "x", "OverwriteUnmanagedCustomizations": True})
+    body = json.loads(cap["data"])                 # must parse as JSON, not a&b=c form string
+    assert body["CustomizationFile"] == "AAA" and body["OverwriteUnmanagedCustomizations"] is True
+    assert cap["ct"] == "application/json"

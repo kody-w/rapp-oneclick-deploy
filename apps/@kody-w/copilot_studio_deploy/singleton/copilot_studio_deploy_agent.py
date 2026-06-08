@@ -221,8 +221,11 @@ def _discover(disco_token):
     return [e for e in (r.get("value", []) if isinstance(r, dict) else []) if e.get("ApiUrl")]
 
 def _dataverse(env, token, action, body=None, method="POST"):
+    # JSON-encode here (pass bytes) — _req form-encodes dicts for the OAuth endpoints,
+    # but the Dataverse Web API needs a JSON body.
+    data = json.dumps(body).encode() if body is not None else None
     return _req(f"{env.rstrip('/')}/api/data/v9.2/{action}",
-                data=body, method=method,
+                data=data, method=method,
                 headers={"Authorization": "Bearer " + token, "Content-Type": "application/json",
                          "Accept": "application/json", "OData-MaxVersion": "4.0", "OData-Version": "4.0"})
 
