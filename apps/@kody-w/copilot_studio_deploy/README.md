@@ -16,7 +16,7 @@ view. No PII or secrets ship with this rapplication: you provide a
 - **Two auth paths** — device-code sign-in (zero setup) or a service principal imported from `local.settings.json` (autonomous, saved to `~/.rapp_deploy_settings.json`, never sent to any cloud model).
 
 ## Identity
-`rappid:@kody-w/copilot_studio_deploy:5fe751988016182c5171072328cdd94a7b5afc3aee22051f45d79f18084fed74`
+`rappid:@kody-w/copilot_studio_deploy:7d3729d52e62fefa7bad2ee8c3bef918cee720ca320b2c85fdf22f5aa7034d1d`
 · kind `rapplication` · parent `@rapp/origin` · schema `rapp-rappid/2.0` (Eternity).
 
 MIT licensed.

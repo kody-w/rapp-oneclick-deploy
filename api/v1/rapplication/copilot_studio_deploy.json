@@ -3,7 +3,7 @@
   "id": "copilot_studio_deploy",
   "kind": "rapplication",
   "name": "Copilot Studio Deploy",
-  "rappid": "rappid:@kody-w/copilot_studio_deploy:5fe751988016182c5171072328cdd94a7b5afc3aee22051f45d79f18084fed74",
+  "rappid": "rappid:@kody-w/copilot_studio_deploy:7d3729d52e62fefa7bad2ee8c3bef918cee720ca320b2c85fdf22f5aa7034d1d",
   "version": "1.0.0",
   "publisher": "@kody-w",
   "category": "platform",
