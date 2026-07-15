@@ -17,6 +17,6 @@ view. No PII or secrets ship with this rapplication: you provide a
 
 ## Identity
 `rappid:@kody-w/copilot_studio_deploy:7d3729d52e62fefa7bad2ee8c3bef918cee720ca320b2c85fdf22f5aa7034d1d`
-· kind `rapplication` · parent `@rapp/origin` · schema `rapp-rappid/2.0` (Eternity).
+· kind `rapplication` · parent `@rapp/origin` · schema `rapp/1` (Eternity; ratified Art. LIV, formerly rapp-rappid/2.0).
 
 MIT licensed.

@@ -73,7 +73,7 @@ def test_egg_is_brainstem_egg_2_2_rapplication():
 
 def test_eternity_rappid_in_record_and_egg():
     rj = json.load(open(os.path.join(APP, "rappid.json")))
-    assert rj["schema"] == "rapp-rappid/2.0"
+    assert rj["schema"] == "rapp/1"
     assert ETERNITY.match(rj["rappid"]), f"not Eternity form: {rj['rappid']}"
     assert rj["kind"] == "rapplication"                       # kind in the record, not the string
     assert "v2:" not in rj["rappid"] and "@github.com" not in rj["rappid"]

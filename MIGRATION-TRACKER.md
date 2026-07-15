@@ -1,6 +1,6 @@
 # RAPP Eternity rappid — migration tracker
 
-Target format: `rappid:@<owner>/<slug>:<hex>` — no `v2:`/`v3:` prefix, no `<kind>:` segment, no `@github.com/...` suffix. `kind` lives in the `rappid.json` record. Schema stays `rapp-rappid/2.0`. Hash preserved (32-hex grandfathered) or fresh-minted (64-hex). Never regenerated. (Constitution Art. XXXIV.1, locked 2026-06-03.)
+Target format: `rappid:@<owner>/<slug>:<hex>` — no `v2:`/`v3:` prefix, no `<kind>:` segment, no `@github.com/...` suffix. `kind` lives in the `rappid.json` record. Schema is `rapp/1` (ratified Constitution Art. LIV, 2026-07-15; formerly `rapp-rappid/2.0`). Hash preserved (32-hex grandfathered) or fresh-minted (64-hex). Never regenerated. (Constitution Art. XXXIV.1, locked 2026-06-03.)
 
 Full audit: `~/Desktop/RAPPID-Eternity-Migration-Inventory.md` · 50 repos audited, ~150 touch-points across 30 repos.
 
