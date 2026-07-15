@@ -6,7 +6,7 @@
   "display_name": "Copilot Studio Deploy",
   "github": "https://github.com/kody-w/rapp-oneclick-deploy",
   "url": "https://kody-w.github.io/rapp-oneclick-deploy/",
-  "parent_rappid": "rappid:@rapp/origin:9a8f0a4b5a710e20f4d819a0f37d2a4c9f113b5e78fb3c29e70b54fff48a38f9",
+  "parent_rappid": "rappid:@kody-w/rapp:9a8f0a4b5a710e20f4d819a0f37d2a4c9f113b5e78fb3c29e70b54fff48a38f9",
   "parent_repo": "https://github.com/kody-w/RAPP",
   "born_at": "2026-06-07T00:00:00Z",
   "planted_by": "kody-w",
