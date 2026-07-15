@@ -1,8 +1,8 @@
 {
   "schema": "rapp/1",
-  "rappid": "rappid:@kody-w/copilot_studio_deploy:7d3729d52e62fefa7bad2ee8c3bef918cee720ca320b2c85fdf22f5aa7034d1d",
+  "rappid": "rappid:@kody-w/copilot-studio-deploy:7d3729d52e62fefa7bad2ee8c3bef918cee720ca320b2c85fdf22f5aa7034d1d",
   "kind": "rapplication",
-  "name": "copilot_studio_deploy",
+  "name": "copilot-studio-deploy",
   "display_name": "Copilot Studio Deploy",
   "github": "https://github.com/kody-w/rapp-oneclick-deploy",
   "url": "https://kody-w.github.io/rapp-oneclick-deploy/",
@@ -12,6 +12,6 @@
   "planted_by": "kody-w",
   "planted_at": "2026-06-07T00:00:00Z",
   "kernel_version": "0.6.0",
-  "_migrated_from": "rappid:@kody-w/copilot_studio_deploy:5fe751988016182c5171072328cdd94a7b5afc3aee22051f45d79f18084fed74",
+  "_migrated_from": "rappid:@kody-w/copilot_studio_deploy:7d3729d52e62fefa7bad2ee8c3bef918cee720ca320b2c85fdf22f5aa7034d1d",
   "_parent_migrated_from": "rappid:@rapp/origin:0b635450c04249fbb4b1bdb571044dec"
 }
