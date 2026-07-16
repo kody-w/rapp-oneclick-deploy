@@ -16,9 +16,9 @@ Full audit: `~/Desktop/RAPPID-Eternity-Migration-Inventory.md` · 50 repos audit
 - [ ] **rapp-egg-hub** — `agents/twin_agent.py` (~L1050 `_summon()`): mints `str(uuid.uuid4())`, schema `rapp-rappid/1.1` → `rappid:<slug>:<64hex>`, schema 2.0
 - [ ] **rapp-zoo** — `agents/summon_twin_agent.py` (L340, L37–38): v1-uuid + bare-UUID constants → align to compliant `bond.py`
 - [ ] **neighborhood-example** — `agents/egg_hatcher_agent.py` `_mint_rappid()` (~L127): v2-long fallback → `sha256(uuid4().bytes)`
-- [ ] **rapp-god-forum** — `singleton/forum_agent.py` (L128), `index.html` (~L342 mint, ~L356 validate): `rappid:v3:` → Eternity *(live forum)*
+- [ ] **rapp-god-forum** — `singleton/forum_agent.py` (L128), `index.html` (~L342 mint, ~L356 validate): `rappid:v3:` → Eternity *(live forum)* <!-- legacy v2 form: read-forever, never written -->
 - [ ] **rapp-resident** — `verify.py`: validates `rappid:v3:` → accept Eternity
-- [ ] **microsoft-se-team-neighborhood** — `index.html`: mints `rappid:v3:` → Eternity
+- [ ] **microsoft-se-team-neighborhood** — `index.html`: mints `rappid:v3:` → Eternity <!-- legacy v2 form: read-forever, never written -->
 
 ## Phase 2 — Generators / stores
 - [ ] **RAPP_Store** — `scripts/build_pokedex_api.py` (L113–114, 202–203, parent L125/240): emit Eternity → regenerates all 14 rapplication JSONs + 3 eggs in one pass
