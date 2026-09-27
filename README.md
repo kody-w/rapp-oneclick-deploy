@@ -1,5 +1,9 @@
 # RAPP → Copilot Studio · One-Click Deploy
 
+<!-- rapp1:network-header:start -->
+[![RAPP/1](https://kody-w.github.io/rapp-hive-public/portfolio/badges/rapp-oneclick-deploy.svg)](https://github.com/kody-w/rapp-hive-public/blob/main/portfolio/repos/rapp-oneclick-deploy.md) · **New to RAPP?** [Start here: get your Brainstem →](https://github.com/kody-w/rapp-installer#start-here)
+<!-- rapp1:network-header:end -->
+
 Deploy a RAPP agent into **your own** Microsoft Copilot Studio environment in one click.
 Sign in once and the agent imports itself — no downloads, no manual solution import, no config.
 
