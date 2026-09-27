@@ -1,5 +1,7 @@
 """Spec compliance for the copilot_studio_deploy rapplication."""
 import ast, hashlib, json, os, re, zipfile
+
+import pytest
 from conftest import REPO
 
 APP = os.path.join(REPO, "apps", "@kody-w", "copilot_studio_deploy")
@@ -98,6 +100,18 @@ def test_eternity_rappid_in_record_and_egg():
     assert rj["kind"] == "rapplication"                       # kind in the record, not the string
     assert "v2:" not in rj["rappid"] and "@github.com" not in rj["rappid"]
     assert ETERNITY.match(rj["parent_rappid"])                # parent also Eternity
+
+
+@pytest.mark.xfail(
+    strict=True,
+    reason="identity divergence awaiting the owner's decision: "
+           "https://github.com/kody-w/rapp-oneclick-deploy/issues/5",
+)
+def test_egg_rappid_matches_app_record():
+    rj = json.load(open(os.path.join(APP, "rappid.json")))
+    with zipfile.ZipFile(EGG) as z:
+        egg_rj = json.loads(z.read("rappid.json"))
+    assert egg_rj["rappid"] == rj["rappid"]
 
 
 def test_pokedex_and_index():
