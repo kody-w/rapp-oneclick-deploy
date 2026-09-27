@@ -1,6 +1,7 @@
-"""Spec compliance: the copilot_studio_deploy rapplication is up to RAPP spec
-(rapp-application/1.0 bundle, brainstem-egg/2.2-rapplication egg, Eternity rappid)."""
-import ast, io, json, os, re, zipfile
+"""Spec compliance for the copilot_studio_deploy rapplication."""
+import ast, hashlib, json, os, re, zipfile
+
+import pytest
 from conftest import REPO
 
 APP = os.path.join(REPO, "apps", "@kody-w", "copilot_studio_deploy")
@@ -57,18 +58,39 @@ def test_size_caps():
     assert os.path.getsize(EGG) < 5_000_000, "bundle must be < 5 MB"
 
 
-def test_egg_is_brainstem_egg_2_2_rapplication():
-    z = zipfile.ZipFile(EGG)
-    names = set(z.namelist())
-    assert {"rappid.json", "manifest.json"} <= names                      # required envelope
-    assert "agents/copilot_studio_deploy_agent.py" in names               # counts.agent
-    assert "rapp_ui/copilot_studio_deploy/index.html" in names            # has_skin
-    em = json.loads(z.read("manifest.json"))
-    assert em["schema"] == "brainstem-egg/2.2-rapplication"
-    assert em["type"] == "rapplication" and em["has_skin"] is True
-    assert em["counts"] == {"agent": 1, "ui": 1, "data": 0, "soul": 0, "organ": 0}
-    assert em["agent_filename"] == "copilot_studio_deploy_agent.py"
-    assert em["organ_filename"] is None
+def _hb(space: str, data: bytes) -> str:
+    return hashlib.sha256(space.encode() + b"\n" + data).hexdigest()
+
+
+def test_egg_is_strict_rapp_1_rapplication():
+    with zipfile.ZipFile(EGG) as z:
+        infos = z.infolist()
+        names = [info.filename for info in infos]
+        assert names[0] == "manifest.json"
+        assert all(info.compress_type == zipfile.ZIP_STORED for info in infos)
+        assert all(info.flag_bits == 0x800 for info in infos)
+        manifest_bytes = z.read("manifest.json")
+        manifest = json.loads(manifest_bytes)
+        assert set(manifest) == {
+            "schema", "variant", "rappid", "created_utc",
+            "contents", "payload", "sig",
+        }
+        assert manifest["schema"] == "rapp/1-egg"
+        assert manifest["variant"] == "rapplication"
+        assert manifest["sig"] is None
+        assert manifest["rappid"] == json.loads(z.read("rappid.json"))["rappid"]
+        contents = manifest["contents"]
+        paths = [item["path"] for item in contents]
+        assert paths == sorted(paths, key=lambda value: value.encode("utf-8"))
+        assert paths == [
+            "agent.py",
+            "rapp_ui/copilot_studio_deploy/index.html",
+            "rappid.json",
+        ]
+        assert set(names) == {"manifest.json", *paths}
+        for item in contents:
+            assert set(item) == {"path", "hash"}
+            assert item["hash"] == _hb("rapp/1:egg", z.read(item["path"]))
 
 
 def test_eternity_rappid_in_record_and_egg():
@@ -78,8 +100,17 @@ def test_eternity_rappid_in_record_and_egg():
     assert rj["kind"] == "rapplication"                       # kind in the record, not the string
     assert "v2:" not in rj["rappid"] and "@github.com" not in rj["rappid"]
     assert ETERNITY.match(rj["parent_rappid"])                # parent also Eternity
-    # egg's rappid matches the record's
-    egg_rj = json.loads(zipfile.ZipFile(EGG).read("rappid.json"))
+
+
+@pytest.mark.xfail(
+    strict=True,
+    reason="identity divergence awaiting the owner's decision: "
+           "https://github.com/kody-w/rapp-oneclick-deploy/issues/5",
+)
+def test_egg_rappid_matches_app_record():
+    rj = json.load(open(os.path.join(APP, "rappid.json")))
+    with zipfile.ZipFile(EGG) as z:
+        egg_rj = json.loads(z.read("rappid.json"))
     assert egg_rj["rappid"] == rj["rappid"]
 
 
